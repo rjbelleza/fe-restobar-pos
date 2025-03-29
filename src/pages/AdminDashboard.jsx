@@ -1,24 +1,19 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '../layouts/Header';
-import Sidemenu from '../layouts/Sidemenu';
+import AdminSidemenu from '../layouts/AdminSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
-import Card from '../components/Card';
 import BarGraph from '../components/BarGraph';
-import dashboardIcon from '../assets/icons/dashboard.png';
-import salesIcon from '../assets/icons/sales.png';
-import inventoryIcon from '../assets/icons/inventory.png';
-import orderHistoryIcon from '../assets/icons/order-history.png';
-import reportsIcon from '../assets/icons/reports.png';
-import staffInfoIcon from '../assets/icons/staff-info.png';
+import Card from '../components/Card';
+
 
 const label = [
-  { menu: 'Dashboard', path: '/adminDashboard', icon: dashboardIcon },
-  { menu: 'Sales', path: '/sales', icon: salesIcon },
-  { menu: 'Inventory', path: '/adminInventory', icon: inventoryIcon },
-  { menu: 'Order History', path: '/adminorderHistory', icon: orderHistoryIcon },
-  { menu: 'Reports', path: '/reports', icon: reportsIcon },
-  { menu: 'Staff Information', path: '/staffInformation', icon: staffInfoIcon },
+  { menu: 'Dashboard', path: '/adminDashboard' },
+  { menu: 'Sales', path: '/sales', },
+  { menu: 'Inventory', path: '/adminInventory' },
+  { menu: 'Order History', path: '/adminorderHistory'},
+  { menu: 'Reports', path: '/reports', },
+  { menu: 'Staff Information', path: '/staffInformation' },
 ];
 
 const AdminDashboard = () => {
@@ -66,7 +61,6 @@ const AdminDashboard = () => {
     <div className="h-screen w-screen flex flex-col gap-1">
       <Header />
       <div className="flex w-full h-full gap-3">
-        <Sidemenu user={user} label={label} />
         <div className="flex flex-col gap-5 w-full pr-[10px]">
           <Breadcrumb currentMenu={menu()} />
           <div className="flex gap-4 flex-wrap">

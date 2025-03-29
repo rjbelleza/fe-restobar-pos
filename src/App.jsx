@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";  
-import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContexts";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 

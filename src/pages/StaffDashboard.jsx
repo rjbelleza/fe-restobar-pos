@@ -1,7 +1,6 @@
 import Header from "../layouts/Header";
-import Sidemenu from "../layouts/Sidemenu";
+import AdminSidemenu from "../layouts/AdminSidemenu";
 import Breadcrumb from "../components/Breadcrumb";
-import MenuCard from "../components/MenuCard";
 import { useState, useEffect } from "react";
 
 const label = [
@@ -63,7 +62,7 @@ const StaffDashboard = () => {
         <div className="flex flex-col h-screen w-screen">
             <Header />
             <div className="flex h-full w-full mt-1">
-                <Sidemenu user={currentUser} label={label} />
+                <AdminSidemenu user={currentUser} label={label} />
                 <div className="flex flex-col gap-5 w-full pr-10 overflow-auto">
                     <Breadcrumb currentMenu="MENU" />
                     <div className="h-full w-90% grid grid-rows-4 gap-1 ml-4 overflow-auto">
