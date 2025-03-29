@@ -65,7 +65,6 @@ const SideMenuBtn = () => {
                 <div className="h-full w-2 bg-purple-500"></div>
                 <div className="flex justify-between w-full">
                     <p>Sales</p>
-                    <PhilippinePeso size={28} className="bg-purple-500 rounded-full mr-3 p-1" />
                 </div>
             </Link>
 

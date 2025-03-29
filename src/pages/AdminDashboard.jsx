@@ -61,6 +61,7 @@ const AdminDashboard = () => {
     <div className="h-screen w-screen flex flex-col gap-1">
       <Header />
       <div className="flex w-full h-full gap-3">
+        <AdminSidemenu />
         <div className="flex flex-col gap-5 w-full pr-[10px]">
           <Breadcrumb currentMenu={menu()} />
           <div className="flex gap-4 flex-wrap">
