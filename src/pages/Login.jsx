@@ -1,6 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContexts";
+import { OctagonAlert, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ const Login = () => {
       setValidationErrors([]);
       setIsSubmitting(true);
 
-      try {
+        try {
           const user = await login(formData.username, formData.password);
           
           // Redirect based on user role after successful login
@@ -74,16 +75,33 @@ const Login = () => {
             disabled={isSubmitting}
           />
 
-          <label className="text-[14px] font-medium ml-2 text-[#B82132]">Password*</label>
-          <input
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            className="p-3 h-[40px] w-full bg-white border-1 border-gray-500 rounded-md mt-1 mb-7 hover:border-[#B82132] hover:border-2"
-            required
-            disabled={isSubmitting}
-          />
+          <div className="relative">
+            <label className="text-[14px] font-medium ml-2 text-[#B82132]">Password*</label>
+            <input
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              type={showPassword ? "text" : "password"}
+              className="p-3 h-[40px] w-full bg-white border-1 border-gray-500 rounded-md mt-1 mb-7 hover:border-[#B82132] hover:border-2"
+              required
+              disabled={isSubmitting}
+              autoComplete="current-password"
+            />
+
+            <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+                {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-gray-500" />
+                ) : (
+                    <Eye className="h-5 w-5 text-gray-500" />
+                )}
+            </button>
+          </div>
 
           <button 
             type="submit" 
@@ -99,10 +117,14 @@ const Login = () => {
         <div className="flex flex-col gap-4">
           <div className="flex justify-between">
             <div className="flex gap-2 items-center">
-              <input type="checkbox" />
-              <p className="text-[12px]">Remember me</p>
+              <input 
+                type="checkbox" 
+                checked={rememberMe}
+                onChange={() => setRememberMe(!rememberMe)}
+                disabled={isSubmitting}
+              />
+              <label className="text-[12px]">Remember me</label>
             </div>
-            <a className="text-[12px] text-center cursor-pointer"><u>Forgot password?</u></a>
           </div>
         </div>
       </div>
