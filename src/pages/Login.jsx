@@ -3,46 +3,59 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContexts";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    username: "",
+    password: ""
+  });
   const [error, setError] = useState("");
   const [validationErrors, setValidationErrors] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setValidationErrors([]);
-    setIsSubmitting(true);
+      e.preventDefault();
+      setError('');
+      setValidationErrors([]);
+      setIsSubmitting(true);
 
-    try {
-        const result = await login(email, password);
+      try {
+          const user = await login(formData.username, formData.password);
+          
+          // Redirect based on user role after successful login
+          if (user?.role === "admin") {
+              navigate('/admin-dashboard');
+          } else if (user?.role === "staff") {
+              navigate('/new-sales');
+          } else {
+              navigate('/'); // Default redirect if role is unknown
+          }
+      } catch (err) {
+          console.error('Login error:', err);
+          if (err.response?.data?.errors) {
+              setValidationErrors(Object.values(err.response.data.errors).flat());
+          } else {
+              setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+          }
+      } finally {
+          setIsSubmitting(false);
+      }
+  };
 
-        if (result.success) {
-            // Redirect based on user role
-            if (result.user.role === "admin") {
-                navigate('/admin-dashboard');
-            } else if (result.user.role === "staff") {
-                navigate('/staff-dashboard');
-            } else {
-                navigate('/'); // Redirect to home if role is unknown
-            }
-        } else {
-            if (result.errors) {
-                setValidationErrors(Object.values(result.errors).flat());
-            } else {
-                setError(result.message || 'Invalid credentials');
-            }
-        }
-    } catch (err) {
-        console.error('Login error:', err);
-        setError('An unexpected error occurred');
-    } finally {
-        setIsSubmitting(false);
-    }
-};
+  const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({
+          ...prev,
+          [name]: value
+      }));
+      // Clear errors when user starts typing
+      if (error || validationErrors.length) {
+          setError('');
+          setValidationErrors([]);
+      }
+  };
 
   return (
     <div className="flex justify-center items-center h-screen w-screen bg-[url('./images/bg.jpeg')] bg-center bg-cover">
@@ -51,9 +64,11 @@ const Login = () => {
         <form className="mt-5 mb-5" onSubmit={handleSubmit}>
           <label className="text-[14px] font-medium ml-2 text-[#B82132]">Email or Username*</label>
           <input
+            id="username"
+            name="username"
+            value={formData.username}
+            onChange={handleInputChange}
             type="text"
-            onChange={(e) => setEmail(e.target.value)}
-            value={email}
             className="p-3 h-[40px] w-full bg-white border-1 border-gray-500 rounded-md mt-1 mb-5 hover:border-[#B82132] hover:border-2"
             required
             disabled={isSubmitting}
@@ -61,9 +76,10 @@ const Login = () => {
 
           <label className="text-[14px] font-medium ml-2 text-[#B82132]">Password*</label>
           <input
-            type="password"
-            onChange={(e) => setPassword(e.target.value)}
-            value={password}
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleInputChange}
             className="p-3 h-[40px] w-full bg-white border-1 border-gray-500 rounded-md mt-1 mb-7 hover:border-[#B82132] hover:border-2"
             required
             disabled={isSubmitting}
