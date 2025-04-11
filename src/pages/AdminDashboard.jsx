@@ -5,6 +5,7 @@ import AdminSidemenu from '../layouts/AdminSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
 import BarGraph from '../components/BarGraph';
 import Card from '../components/Card';
+import ColumnChart from '../components/ColumnChart';
 
 
 const label = [
@@ -60,9 +61,9 @@ const AdminDashboard = () => {
         <AdminSidemenu />
         <div className="flex flex-col gap-5 w-full pr-[10px] mt-2">
           <Breadcrumb currentMenu={menu()} />
-          <div className="flex gap-4 flex-wrap">
-            <BarGraph />
-            <div className='grid grid-cols-4 gap-[50px] justify-center w-full px-5'>
+          <div className="flex justify-between h-full w-full gap-4">
+            <ColumnChart />
+            <div className='grid grid-rows-4 gap-4 w-full px-5'>
                 <Card url="card-bg1.png" category="Current Sales" value="₱30,000.00" range="Last 30 days" color="#B82132" />
                 <Card url="card-bg2.png" category="Current Expenses" value="₱20,000.00" range="Last 30 days" color="#B82132" />
                 <Card url="card-bg3.png" category="Inventory Level" value="In Stock" range="All products" color="#B82132" />

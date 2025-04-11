@@ -6,11 +6,11 @@ const Card = ({url, category, value, range, color}) => {
                         hover:scale-105 transition-all rounded-md"
              style={{backgroundImage: "url('src/assets/backgroundImages/" + url}}
         >
-            <div className="w-[245px]"></div>
-            <p className="font-medium w-fit px-2 py-1 rounded-sm text-[12px] text-white"
+            <div className="w-[200px]"></div>
+            <p className="font-medium w-fit px-2 py-1 rounded-sm text-[10px] text-white"
                style={{backgroundColor: color}}
             >{category}</p>
-            <p className="text-[30px] font-medium text-primary">{value}</p>
+            <p className="text-[20px] font-medium text-primary">{value}</p>
             <p className="font-medium text-gray-700 text-[13px]">{range}</p>
         </div>
     );
