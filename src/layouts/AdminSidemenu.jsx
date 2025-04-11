@@ -1,8 +1,7 @@
-import { PhilippinePeso } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContexts';
-import { Menu, LayoutDashboard, PackageOpen, HandCoins, BookUser, ChartArea, MonitorDot } from 'lucide-react';
+import { Menu, LayoutDashboard, PackageOpen, HandCoins, ReceiptText , ChartArea, Users } from 'lucide-react';
 
 const AdminSidemenu = () => {
     const { user, loading } = useAuth();
@@ -86,7 +85,7 @@ const AdminSidemenu = () => {
                         <Link to="/admin-dashboard" 
                               className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                                        hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-                        ><BookUser />
+                        ><ReceiptText  />
                         </Link>
         
                         <Link to="/admin-dashboard" 
@@ -98,7 +97,7 @@ const AdminSidemenu = () => {
                         <Link to="/admin-dashboard" 
                               className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                                        hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-                        ><MonitorDot />
+                        ><Users />
                         </Link>
         
                     </div>
@@ -113,44 +112,50 @@ const SideMenuBtn = () => {
     return (
         <div className="flex flex-col gap-3 h-full w-full text-white font-light">
             <Link to="/admin-dashboard" 
-                  className={`h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium
                              ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                             `}
-            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard
-            </p>
+            > 
+            <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard</p>
+            <LayoutDashboard />
             </Link>
 
             <Link to="/admin-inventory" 
-                  className={`h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                     hover:text-black transition-all ease-in-out text-[14px] font-medium
                       ${location.pathname == "/admin-inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                      `}
             > <p className='flex justify-center items-center text-[14px] w-full h-full'>Inventory</p>
+            <PackageOpen />
             </Link>
 
             <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
             > <p className='flex justify-center items-center text-[14px] w-full h-full'>Sales</p>
+            <HandCoins />
             </Link>
 
             <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Staff Information</p>
+            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Expenses</p>
+            <ReceiptText  />
             </Link>
 
             <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
             ><p className='flex justify-center items-center text-[14px] w-full h-full'>Reports</p>
+            <ChartArea />
             </Link>
 
             <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            ><p className='flex justify-center items-center text-[14px] w-full h-full'>User Activity</p>
+            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Users</p>
+            <Users />
             </Link>
         </div>
     );
