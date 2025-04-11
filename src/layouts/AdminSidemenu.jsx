@@ -70,9 +70,10 @@ const AdminSidemenu = () => {
                         > <LayoutDashboard />
                         </Link>
         
-                        <Link to="/admin-dashboard" 
-                              className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                       hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+                        <Link to="/inventory" 
+                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                        hover:text-black transition-all ease-in-out text-[14px] font-medium
+                                        ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
                         ><PackageOpen />
                         </Link>
         
@@ -121,10 +122,10 @@ const SideMenuBtn = () => {
             <LayoutDashboard />
             </Link>
 
-            <Link to="/admin-inventory" 
+            <Link to="/inventory" 
                   className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                     hover:text-black transition-all ease-in-out text-[14px] font-medium
-                      ${location.pathname == "/admin-inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                      ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                      `}
             > <p className='flex justify-center items-center text-[14px] w-full h-full'>Inventory</p>
             <PackageOpen />
