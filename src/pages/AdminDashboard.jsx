@@ -64,10 +64,10 @@ const AdminDashboard = () => {
           <div className="flex justify-between h-full w-full gap-4">
             <ColumnChart />
             <div className='grid grid-rows-4 gap-4 w-full px-5'>
-                <Card url="card-bg1.png" category="Current Sales" value="₱30,000.00" range="Last 30 days" color="#B82132" />
-                <Card url="card-bg2.png" category="Current Expenses" value="₱20,000.00" range="Last 30 days" color="#B82132" />
-                <Card url="card-bg3.png" category="Inventory Level" value="In Stock" range="All products" color="#B82132" />
-                <Card url="card-bg4.png" category="Net Profit" value="₱50,000.00" range="From Last 30 days" color="#B82132" />
+                <Card category="Current Sales" value="₱30,000.00" range="Last 30 days" color="#B82132" />
+                <Card category="Current Expenses" value="₱20,000.00" range="Last 30 days" color="#B82132" />
+                <Card category="Inventory Level" value="In Stock" range="All products" color="#B82132" />
+                <Card category="Net Profit" value="₱50,000.00" range="From Last 30 days" color="#B82132" />
             </div>
           </div>
         </div>
