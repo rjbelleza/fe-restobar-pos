@@ -65,8 +65,9 @@ const AdminSidemenu = () => {
                         className="flex flex-col gap-5 h-full mt-20 bg-primary"
                     >
                         <Link to="/admin-dashboard" 
-                              className="flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                       hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                       hover:text-black transition-all ease-in-out text-[14px] font-medium
+                                        ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
                         > <LayoutDashboard />
                         </Link>
         
