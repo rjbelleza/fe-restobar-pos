@@ -112,39 +112,44 @@ const SideMenuBtn = () => {
     return (
         <div className="flex flex-col gap-3 h-full w-full text-white font-light">
             <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
+                  className={`h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                           hover:text-black transition-all ease-in-out text-[14px] font-medium
+                             ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                            `}
+            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard
+            </p>
+            </Link>
+
+            <Link to="/admin-inventory" 
+                  className={`h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                    hover:text-black transition-all ease-in-out text-[14px] font-medium
+                      ${location.pathname == "/admin-inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                     `}
+            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Inventory</p>
             </Link>
 
             <Link to="/admin-dashboard" 
                   className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
+            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Sales</p>
             </Link>
 
             <Link to="/admin-dashboard" 
                   className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
+            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Staff Information</p>
             </Link>
 
             <Link to="/admin-dashboard" 
                   className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
+            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Reports</p>
             </Link>
 
             <Link to="/admin-dashboard" 
                   className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
-            </Link>
-
-            <Link to="/admin-dashboard" 
-                  className="h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            >
+            ><p className='flex justify-center items-center text-[14px] w-full h-full'>User Activity</p>
             </Link>
         </div>
     );
