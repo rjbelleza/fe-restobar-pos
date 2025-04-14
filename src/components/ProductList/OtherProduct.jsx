@@ -7,33 +7,27 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus } from 'lucide-react';
-import { Search } from 'lucide-react';
-import { X } from 'lucide-react';
+import { CirclePlus, Search, X } from 'lucide-react';
 
 const OtherProduct = () => {
-  // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
+  const [globalFilter, setGlobalFilter] = useState('');
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
 
-  // Update button handler
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original); // Store the entire row data
+    setSelectedRow(row.original);
     setShowUpdateModal(true);
   };
 
-  // Update modal submit handler
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to update the data
     console.log('Updated data:', selectedRow);
     setShowUpdateModal(false);
   };
 
-  // Update modal input change handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSelectedRow(prev => ({
@@ -43,24 +37,19 @@ const OtherProduct = () => {
   };
 
   const stockColorCode = (stock_quantity) => {
-    if(stock_quantity <= 25) {
-        return 'bg-red-500'
-    } 
-    else if(stock_quantity > 25 && stock_quantity <= 50) {
-        return 'bg-yellow-500'
+    if (stock_quantity <= 25) {
+      return 'bg-red-500';
+    } else if (stock_quantity > 25 && stock_quantity <= 50) {
+      return 'bg-yellow-500';
+    } else {
+      return 'bg-green-500';
     }
-    else {
-        return 'bg-green-500'
-    }
-  }
-
+  };
 
   const capitalize = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+  };
 
-
-  // Fetch data from recentTrans.json
   useEffect(() => {
     fetch('/data/otherProduct.json')
       .then(response => response.json())
@@ -68,55 +57,52 @@ const OtherProduct = () => {
       .catch(error => console.error('Error fetching data:', error));
   }, []);
 
-  // Define columns
-  const columns = useMemo(
-    () => [
-      {
-        id: 'rowNumber',
-        header: '#',
-        cell: ({ row }) => row.index + 1,
-        size: 50,
-        accessorFn: (row, index) => index + 1,
-      },
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: info => info.getValue(),
-        size: 190,
-      },
-      {
-        accessorKey: 'price',
-        header: 'Price',
-        cell: info => "₱" + info.getValue().toFixed(2),
-        size: 160,
-      },
-      {
-        id: 'actions',
-        header: 'Action',
-        cell: ({ row }) => (
-          <button 
-            onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Update
-          </button>
-        ),
-        size: 20,
-      },
-    ],
-    []
-  );
+  const columns = useMemo(() => [
+    {
+      id: 'rowNumber',
+      header: '#',
+      cell: ({ row }) => row.index + 1,
+      size: 50,
+      accessorFn: (row, index) => index + 1,
+    },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: info => info.getValue(),
+      size: 190,
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: info => "₱" + info.getValue().toFixed(2),
+      size: 160,
+    },
+    {
+      id: 'actions',
+      header: 'Action',
+      cell: ({ row }) => (
+        <button 
+          onClick={() => handleUpdateClick(row)}
+          className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+        >
+          Update
+        </button>
+      ),
+      size: 20,
+    },
+  ], []);
 
-  // Initialize the table
   const table = useReactTable({
     data: data,
     columns,
     state: {
       sorting,
       pagination,
+      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -125,14 +111,17 @@ const OtherProduct = () => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
-        <div className='flex items-center justify-end h-[35px] w-full mb-2'>
-            <Search className='mr-[-30px] text-primary' />
-            <input 
-                type='text' 
-                placeholder='Search product by name' 
-                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
-            />
-        </div>
+      {/* Search Box */}
+      <div className='flex items-center justify-end h-[35px] w-full mb-2'>
+        <Search className='mr-[-30px] text-primary' />
+        <input 
+          type='text' 
+          placeholder='Search product by name' 
+          className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+        />
+      </div>
 
       {/* Update Modal */}
       {showUpdateModal && selectedRow && (

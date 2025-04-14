@@ -18,6 +18,7 @@ const MainDish = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState(''); // Add this for search
 
   // Update button handler
   const handleUpdateClick = (row) => {
@@ -42,6 +43,11 @@ const MainDish = () => {
     }));
   };
 
+  // Search handler
+  const handleSearchChange = (e) => {
+    setGlobalFilter(e.target.value);
+  };
+
   const stockColorCode = (stock_quantity) => {
     if(stock_quantity <= 25) {
         return 'bg-red-500'
@@ -54,11 +60,9 @@ const MainDish = () => {
     }
   }
 
-
   const capitalize = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
-
 
   // Fetch data from recentTrans.json
   useEffect(() => {
@@ -114,13 +118,27 @@ const MainDish = () => {
     state: {
       sorting,
       pagination,
+      globalFilter, // Add global filter state
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter, // Add global filter change handler
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      // Custom filter function to search in name column
+      const search = filterValue.toLowerCase();
+      const value = row.getValue(columnId);
+      
+      if (typeof value === 'string') {
+        return value.toLowerCase().includes(search);
+      }
+      
+      // For other columns or if the value isn't a string
+      return String(value).toLowerCase().includes(search);
+    },
   });
 
   return (
@@ -130,7 +148,9 @@ const MainDish = () => {
             <input 
                 type='text' 
                 placeholder='Search product by name' 
-                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
+                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
+                value={globalFilter}
+                onChange={handleSearchChange}
             />
         </div>
 
@@ -272,10 +292,10 @@ const MainDish = () => {
               <span className="font-medium">
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  data.length
+                  table.getFilteredRowModel().rows.length
                 )}
               </span>{' '}
-              of <span className="font-medium">{data.length}</span> results
+              of <span className="font-medium">{table.getFilteredRowModel().rows.length}</span> results
             </p>
           </div>
           <div>

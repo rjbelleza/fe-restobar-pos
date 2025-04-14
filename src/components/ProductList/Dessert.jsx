@@ -17,6 +17,7 @@ const Dessert = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState(''); // ✅ Added for search
 
   // Update button handler
   const handleUpdateClick = (row) => {
@@ -27,7 +28,6 @@ const Dessert = () => {
   // Update modal submit handler
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to update the data
     console.log('Updated data:', selectedRow);
     setShowUpdateModal(false);
   };
@@ -53,13 +53,11 @@ const Dessert = () => {
     }
   }
 
-
   const capitalize = (string) => {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
-
-  // Fetch data from recentTrans.json
+  // Fetch data from dessertProduct.json
   useEffect(() => {
     fetch('/data/dessertProduct.json')
       .then(response => response.json())
@@ -113,11 +111,13 @@ const Dessert = () => {
     state: {
       sorting,
       pagination,
+      globalFilter, // ✅ Added
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter, // ✅ Added
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), // ✅ Needed for search
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
@@ -130,6 +130,8 @@ const Dessert = () => {
                 type='text' 
                 placeholder='Search product by name' 
                 className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
+                value={globalFilter} // ✅ Added
+                onChange={(e) => setGlobalFilter(e.target.value)} // ✅ Added
             />
         </div>
 
