@@ -62,7 +62,7 @@ const MainDish = () => {
 
   // Fetch data from recentTrans.json
   useEffect(() => {
-    fetch('/data/menu.json')
+    fetch('/data/mainDish.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
@@ -142,7 +142,7 @@ const MainDish = () => {
         >
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className='flex justify-between text-[19px] font-medium text-primary mb-8'>
-              UPDATE INGREDIENTS
+              UPDATE MAIN DISH
               <span className='text-gray-800 hover:text-gray-600 font-normal'>
                 <button 
                   onClick={() => setShowUpdateModal(false)}

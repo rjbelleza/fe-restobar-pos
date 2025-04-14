@@ -1,11 +1,10 @@
 import AdminSidemenu from "../layouts/AdminSidemenu";
 import Header from "../layouts/Header";
 import Breadcrumb from "../components/Breadcrumb";
-import BeverageTable from '../components/BeverageTable';
-import DessertTable from "../components/DessertTable";
-import OthersTable from "../components/OthersTable";
 import MainDish from "../components/ProductList/MainDish";
 import Beverage from "../components/ProductList/Beverage";
+import Dessert from "../components/ProductList/Dessert";
+import OtherProduct from "../components/ProductList/OtherProduct";
 import { useState } from "react";
 
 const Inventory = () => {
@@ -36,9 +35,9 @@ const Inventory = () => {
                     ) : category == "beverage" ? (
                         <Beverage />
                     ) : category == "desserts" ? (
-                        <DessertTable /> 
+                        <Dessert /> 
                     ) : category == "others" ? (
-                        <OthersTable />
+                        <OtherProduct />
                     ) : (
                         <></>
                     )}

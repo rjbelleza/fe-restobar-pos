@@ -1,56 +1,51 @@
 [
     {
         "id": 1,
-        "name": "Halo-Halo",
+        "name": "Nature's Spring 250ml",
         "stock": 50,
+        "price": 15,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 2,
-        "name": "Leche Flan",
-        "stock": 50,
+        "name": "Nature's Spring 500ml",
+        "stock": 50,    
+        "price": 25,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 3,
-        "name": "Biko",
+        "name": "Nature's Spring 1000ml",
         "stock": 50,
+        "price": 35,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 4,
-        "name": "Buko Salad",
+        "name": "Coke Mismo",
         "stock": 50,
+        "price": 30,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 5,
-        "name": "Cassava Cake",
+        "name": "Coke Litro",
         "stock": 50,
+        "price": 50,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 6,
-        "name": "Minatamis na Saging",
-        "stock": 50,   
+        "name": "Red Horse 500ml",
+        "stock": 50,
+        "price": 75,
         "created_at": "2025-03-26 02:56:34"
     },
     {
         "id": 7,
-        "name": "Suman",
+        "name": "Red Horse 1000ml",
         "stock": 50,
-        "created_at": "2025-03-26 02:56:34"
-    },
-    {
-        "id": 8,
-        "name": "Graham Bar",
-        "stock": 50,
-        "created_at": "2025-03-26 02:56:34"
-    },
-    {
-        "id": 9,
-        "name": "Mango Float",
-        "stock": 50,
+        "price": 120,
         "created_at": "2025-03-26 02:56:34"
     }
 ]
