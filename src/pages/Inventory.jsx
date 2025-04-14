@@ -18,7 +18,7 @@ const Inventory = () => {
                 <div className="flex flex-col gap-5 w-full pr-[10px] mt-2">
                     <Breadcrumb />
                     <div className='flex justify-between font-medium text-primary mb-3'>
-                        <div className="w-full h-[30px] fixed z-30">
+                        <div className="w-1/2 h-[30px] fixed z-30">
                             <select 
                                 className='h-[35px] border border-black rounded-sm px-2'
                                 onChange={(e) => setCategory(e.target.value)}

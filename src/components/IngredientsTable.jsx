@@ -16,7 +16,31 @@ const IngredientsTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [showModal, setShowModal] = useState(false);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+
+  // Update button handler
+  const handleUpdateClick = (row) => {
+    setSelectedRow(row.original); // Store the entire row data
+    setShowUpdateModal(true);
+  };
+
+  // Update modal submit handler
+  const handleUpdateSubmit = (e) => {
+    e.preventDefault();
+    // Here you would typically make an API call to update the data
+    console.log('Updated data:', selectedRow);
+    setShowUpdateModal(false);
+  };
+
+  // Update modal input change handler
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedRow(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const stockColorCode = (stock_quantity) => {
     if(stock_quantity <= 25) {
@@ -70,7 +94,10 @@ const IngredientsTable = () => {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
-          <button className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2">
+          <button 
+            onClick={() => handleUpdateClick(row)}
+            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+          >
             Update
           </button>
         ),
@@ -106,6 +133,55 @@ const IngredientsTable = () => {
                 className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
             />
         </div>
+
+      {/* Update Modal */}
+      {showUpdateModal && selectedRow && (
+        <div 
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }} 
+          className="fixed inset-0 flex items-center justify-center z-1000"
+        >
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className='flex justify-between text-[19px] font-medium text-primary mb-8'>
+              UPDATE INGREDIENTS
+              <span className='text-gray-800 hover:text-gray-600 font-normal'>
+                <button 
+                  onClick={() => setShowUpdateModal(false)}
+                  className='cursor-pointer'
+                >
+                  <X size={20} />
+                </button>
+              </span>
+            </p>
+            <form className='flex flex-col' onSubmit={handleUpdateSubmit}>
+              <label className='text-[15px] mb-2'>Product Name*</label>
+              <input 
+                type='text'
+                name="name"
+                value={selectedRow.name || ''}
+                onChange={handleInputChange}
+                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
+              />
+              
+              <label className='text-[15px] mb-2'>Stock Qty.*</label>
+              <input 
+                type='number'
+                name="stock"
+                value={selectedRow.stock || ''}
+                onChange={handleInputChange}
+                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
+                min={0}
+              />
+              
+              <button 
+                type='submit'
+                className='bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+              >
+                UPDATE
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
@@ -238,57 +314,6 @@ const IngredientsTable = () => {
           </div>
         </div>
       </div>
-
-      {/* Add product modal */}
-      <div 
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }} 
-            className={`fixed inset-0 flex items-center justify-center z-1000 transition-opacity duration-300
-                ${showModal ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        >
-            <div className={`bg-white p-7 px-20 pb-10 rounded-sm shadow-lg transform transition-transform duration-300
-                ${showModal ? 'scale-100' : 'scale-95'}`
-            }>
-                <p className='flex justify-between text-[19px] font-medium text-blue-900 mb-8'>
-                    ADD PRODUCT
-                    <span className='text-gray-800 hover:text-gray-600 font-normal'>
-                        <button 
-                            onClick={() => setShowModal(false)}
-                            className='cursor-pointer'><X size={20} /></button>
-                    </span>
-                </p>
-                <form className='flex flex-col'>
-                    <label className='text-[15px] mb-2'>Product Name*</label>
-                    <input 
-                        type='text' 
-                        className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
-                    />
-                    <label className='text-[15px] mb-2'>Price*</label>
-                    <input 
-                        type='number' 
-                        className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
-                        min={0}
-                    />
-                    <label className='text-[15px] mb-2'>Stock Qty.*</label>
-                    <input 
-                        type='number' 
-                        className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
-                        min={0}
-                    />
-                    <label className='text-[15px] mb-2'>Category*</label>
-                    <select className='border border-gray-500 px-4 py-2 rounded-sm mb-10'>
-                        <option>Water</option>
-                        <option>Container</option>
-                    </select>
-                    <button 
-                        onClick={() => setShowModal(false)}
-                        type='submit'
-                        className='bg-blue-900 text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-blue-800'
-                    >
-                        CONTINUE
-                    </button>
-                </form>
-            </div>
-        </div>
     </div>
   );
 };
