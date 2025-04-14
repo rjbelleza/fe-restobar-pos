@@ -19,7 +19,10 @@ const Breadcrumb = ({ currentMenu }) => {
       }
       else if (location.pathname === '/product-list') {
         return 'PRODUCT LIST'
-    }
+      }
+      else if (location.pathname === '/sales') {
+        return 'SALES MANAGEMENT'
+      }
   }
 
   return (
@@ -30,3 +33,4 @@ const Breadcrumb = ({ currentMenu }) => {
 };
 
 export default Breadcrumb;
+  
