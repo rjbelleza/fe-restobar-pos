@@ -159,7 +159,7 @@ const DessertTable = () => {
               </span>
             </p>
             <form className='flex flex-col' onSubmit={handleUpdateSubmit}>
-              <label className='text-[15px] mb-2'>Product Name*</label>
+              <label className='text-[15px] mb-2'>Product Name</label>
               <input 
                 type='text'
                 name="name"
@@ -168,7 +168,7 @@ const DessertTable = () => {
                 className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
               />
               
-              <label className='text-[15px] mb-2'>Stock Qty.*</label>
+              <label className='text-[15px] mb-2'>Quantity</label>
               <input 
                 type='number'
                 name="stock"

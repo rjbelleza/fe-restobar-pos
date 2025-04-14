@@ -11,15 +11,15 @@ const Breadcrumb = ({ currentMenu }) => {
       else if (location.pathname === '/admin-sales') {
           return 'SALES MANAGEMENT'
       }
-      else if (location.pathname === '/new-sales') {
-          return 'SALES MANAGEMENT > NEW TRANSACTION'
-      }
       else if (location.pathname === '/inventory') {
           return 'INVENTORY MANAGEMENT'
       }
       else if (location.pathname === '/expenses') {
           return 'EXPENSES MANAGEMENT'
       }
+      else if (location.pathname === '/product-list') {
+        return 'PRODUCT LIST'
+    }
   }
 
   return (

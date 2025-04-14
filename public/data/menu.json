@@ -1,0 +1,32 @@
+[
+    {
+      "id": 1,
+      "name": "Sizzling Pork Sisig",
+      "price": 79  
+    },
+    {
+      "id": 2,
+      "name": "Sizzling Pork Chop",
+      "price": 79  
+    },
+    {
+      "id": 3,
+      "name": "Sizzling Fried Chicken",
+      "price": 69  
+    },
+    {
+      "id": 4,
+      "name": "Beef Pares",
+      "price": 79  
+    },
+    {
+      "id": 5,
+      "name": "Beef Steak",
+      "price": 120  
+    },
+    {
+      "id": 6,
+      "name": "Chicken Steak",
+      "price": 99  
+    }
+]

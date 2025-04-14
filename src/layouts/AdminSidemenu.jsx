@@ -148,8 +148,10 @@ const SideMenuBtn = () => {
             </Link> 
 
             <Link to="/product-list" 
-                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                    hover:text-black transition-all ease-in-out text-[14px] font-medium
+                    ${location.pathname == "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                    `}
             > <p className='flex justify-center items-center text-[14px] w-full h-full'>Product List</p>
             <SquareChartGantt />
             </Link>

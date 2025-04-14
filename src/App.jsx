@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContexts";
 import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Inventory from "./pages/Inventory";
+import ProductList from "./pages/ProductList";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ element, role }) => {
@@ -29,6 +30,7 @@ const App = () => {
 
                 {/* Protected Admin Routes */}
                 <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} role="admin" />} />
+                <Route path="/product-list" element={<ProtectedRoute element={<ProductList />} role="admin" />} />
 
                 {/* Protected Staff Routes */}
                 <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="staff" />} />
