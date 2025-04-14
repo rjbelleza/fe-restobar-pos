@@ -13,49 +13,65 @@ const OtherProduct = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [globalFilter, setGlobalFilter] = useState('');
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [newItem, setNewItem] = useState({ name: '', price: '' });
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [addItem, setAddItem] = useState(false);
+
+  useEffect(() => {
+    fetch('/data/otherProduct.json')
+      .then(res => res.json())
+      .then(setData)
+      .catch(err => console.error('Error fetching data:', err));
+  }, []);
 
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original);
+    setSelectedRow({ ...row.original });
     setShowUpdateModal(true);
   };
 
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    console.log('Updated data:', selectedRow);
+    const updated = data.map((item, index) =>
+      index === selectedRow.index ? selectedRow : item
+    );
+    setData(updated);
     setShowUpdateModal(false);
+    setSelectedRow(null);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSelectedRow(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    const parsedValue = name === 'price' ? parseFloat(value) || 0 : value;
 
-  const stockColorCode = (stock_quantity) => {
-    if (stock_quantity <= 25) {
-      return 'bg-red-500';
-    } else if (stock_quantity > 25 && stock_quantity <= 50) {
-      return 'bg-yellow-500';
+    if (selectedRow) {
+      setSelectedRow(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
     } else {
-      return 'bg-green-500';
+      setNewItem(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
     }
   };
 
-  const capitalize = (string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const newEntry = {
+      name: newItem.name,
+      price: Number(newItem.price),
+    };
+    setData(prev => [...prev, newEntry]);
+    setAddItem(false);
+    setNewItem({ name: '', price: '' });
   };
 
-  useEffect(() => {
-    fetch('/data/otherProduct.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+  const handleSearchChange = (e) => {
+    setGlobalFilter(e.target.value);
+  };
 
   const columns = useMemo(() => [
     {
@@ -63,7 +79,6 @@ const OtherProduct = () => {
       header: '#',
       cell: ({ row }) => row.index + 1,
       size: 50,
-      accessorFn: (row, index) => index + 1,
     },
     {
       accessorKey: 'name',
@@ -81,8 +96,8 @@ const OtherProduct = () => {
       id: 'actions',
       header: 'Action',
       cell: ({ row }) => (
-        <button 
-          onClick={() => handleUpdateClick(row)}
+        <button
+          onClick={() => handleUpdateClick({ ...row, index: row.index })}
           className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
         >
           Update
@@ -93,13 +108,9 @@ const OtherProduct = () => {
   ], []);
 
   const table = useReactTable({
-    data: data,
+    data,
     columns,
-    state: {
-      sorting,
-      pagination,
-      globalFilter,
-    },
+    state: { sorting, pagination, globalFilter },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
@@ -107,21 +118,72 @@ const OtherProduct = () => {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const search = filterValue.toLowerCase();
+      return row.getValue('name').toLowerCase().includes(search);
+    },
   });
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
-      {/* Search Box */}
+      {/* Search and Add */}
       <div className='flex items-center justify-end h-[35px] w-full mb-2'>
         <Search className='mr-[-30px] text-primary' />
-        <input 
-          type='text' 
-          placeholder='Search product by name' 
-          className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
+        <input
+          type='text'
+          placeholder='Search Item by name'
+          className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
           value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          onChange={handleSearchChange}
         />
+        <div className="flex justify-end ml-2">
+          <button
+            onClick={() => setAddItem(true)}
+            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+          >
+            <CirclePlus />
+            Add New Item
+          </button>
+        </div>
       </div>
+
+      {/* Add Modal */}
+      {addItem && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              ADD NEW ITEM
+              <button onClick={() => setAddItem(false)} className="text-gray-800 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </p>
+            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+              <label className="text-[15px] mb-2">Item Name</label>
+              <input
+                type="text"
+                name="name"
+                value={newItem.name}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
+              />
+              <label className="text-[15px] mb-2">Price</label>
+              <input
+                type="number"
+                name="price"
+                value={newItem.price}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                min={0}
+                required
+              />
+              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+                ADD NEW ITEM 
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Update Modal */}
       {showUpdateModal && selectedRow && (

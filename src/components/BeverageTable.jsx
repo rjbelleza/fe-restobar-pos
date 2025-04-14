@@ -14,9 +14,9 @@ const BeverageTable = () => {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [addIngredients, setAddIngredients] = useState(false);
+  const [addBeverage, setAddBeverage] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
+  const [newBeverage, setNewBeverage] = useState({ name: '', stock: '' });
   const [globalFilter, setGlobalFilter] = useState('');
 
   const handleUpdateClick = (row) => {
@@ -38,19 +38,19 @@ const BeverageTable = () => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewIngredient(prev => ({ ...prev, [name]: value }));
+      setNewBeverage(prev => ({ ...prev, [name]: value }));
     }
   };
 
   const handleAddSubmit = (e) => {
     e.preventDefault();
     const newEntry = {
-      name: newIngredient.name,
-      stock: Number(newIngredient.stock),
+      name: newBeverage.name,
+      stock: Number(newBeverage.stock),
     };
     setData(prev => [...prev, newEntry]);
-    setAddIngredients(false);
-    setNewIngredient({ name: '', stock: '' });
+    setAddBeverage(false);
+    setNewBeverage({ name: '', stock: '' });
   };
 
   const stockColorCode = (stock_quantity) => {
@@ -138,7 +138,7 @@ const BeverageTable = () => {
         />
         <div className="flex justify-end ml-2">
           <button
-            onClick={() => setAddIngredients(true)}
+            onClick={() => setAddBeverage(true)}
             className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
           >
             <CirclePlus />
@@ -148,13 +148,13 @@ const BeverageTable = () => {
       </div>
 
       {/* Add Beverage Modal */}
-      {addIngredients && (
+      {addBeverage && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD NEW BEVERAGE
               <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddIngredients(false)} className="cursor-pointer">
+                <button onClick={() => setAddBeverage(false)} className="cursor-pointer">
                   <X size={20} />
                 </button>
               </span>
@@ -164,7 +164,7 @@ const BeverageTable = () => {
               <input
                 type="text"
                 name="name"
-                value={newIngredient.name}
+                value={newBeverage.name}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
@@ -173,7 +173,7 @@ const BeverageTable = () => {
               <input
                 type="number"
                 name="stock"
-                value={newIngredient.stock}
+                value={newBeverage.stock}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}

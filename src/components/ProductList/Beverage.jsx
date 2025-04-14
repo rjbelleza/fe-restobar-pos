@@ -7,195 +7,216 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
-import { X } from 'lucide-react';
+import { CirclePlus, Search, X } from 'lucide-react';
 
 const Beverage = () => {
-  // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [globalFilter, setGlobalFilter] = useState(''); // Add this for search
+  const [newBeverage, setNewBeverage] = useState({ name: '', price: '' });
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [addBeverage, setAddBeverage] = useState(false);
 
-  // Update button handler
+  useEffect(() => {
+    fetch('/data/drinks.json')
+      .then(res => res.json())
+      .then(setData)
+      .catch(err => console.error('Error fetching data:', err));
+  }, []);
+
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original); // Store the entire row data
+    setSelectedRow({ ...row.original });
     setShowUpdateModal(true);
   };
 
-  // Update modal submit handler
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to update the data
-    console.log('Updated data:', selectedRow);
+    const updated = data.map((item, index) =>
+      index === selectedRow.index ? selectedRow : item
+    );
+    setData(updated);
     setShowUpdateModal(false);
+    setSelectedRow(null);
   };
 
-  // Update modal input change handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSelectedRow(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const parsedValue = name === 'price' ? parseFloat(value) || 0 : value;
+
+    if (selectedRow) {
+      setSelectedRow(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
+    } else {
+      setNewBeverage(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
+    }
   };
 
-  // Search handler
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const newEntry = {
+      name: newBeverage.name,
+      price: Number(newBeverage.price),
+    };
+    setData(prev => [...prev, newEntry]);
+    setAddBeverage(false);
+    setNewBeverage({ name: '', price: '' });
+  };
+
   const handleSearchChange = (e) => {
     setGlobalFilter(e.target.value);
   };
 
-  const stockColorCode = (stock_quantity) => {
-    if(stock_quantity <= 25) {
-        return 'bg-red-500'
-    } 
-    else if(stock_quantity > 25 && stock_quantity <= 50) {
-        return 'bg-yellow-500'
-    }
-    else {
-        return 'bg-green-500'
-    }
-  }
-
-  const capitalize = (string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-
-  // Fetch data from recentTrans.json
-  useEffect(() => {
-    fetch('/data/drinks.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
-
-  // Define columns
-  const columns = useMemo(
-    () => [
-      {
-        id: 'rowNumber',
-        header: '#',
-        cell: ({ row }) => row.index + 1,
-        size: 50,
-        accessorFn: (row, index) => index + 1,
-      },
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: info => info.getValue(),
-        size: 190,
-      },
-      {
-        accessorKey: 'price',
-        header: 'Price',
-        cell: info => "₱" + info.getValue().toFixed(2),
-        size: 160,
-      },
-      {
-        id: 'actions',
-        header: 'Action',
-        cell: ({ row }) => (
-          <button 
-            onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Update
-          </button>
-        ),
-        size: 20,
-      },
-    ],
-    []
-  );
-
-  // Initialize the table
-  const table = useReactTable({
-    data: data,
-    columns,
-    state: {
-      sorting,
-      pagination,
-      globalFilter, // Add global filter state
+  const columns = useMemo(() => [
+    {
+      id: 'rowNumber',
+      header: '#',
+      cell: ({ row }) => row.index + 1,
+      size: 50,
     },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: info => info.getValue(),
+      size: 190,
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: info => "₱" + info.getValue().toFixed(2),
+      size: 160,
+    },
+    {
+      id: 'actions',
+      header: 'Action',
+      cell: ({ row }) => (
+        <button
+          onClick={() => handleUpdateClick({ ...row, index: row.index })}
+          className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+        >
+          Update
+        </button>
+      ),
+      size: 20,
+    },
+  ], []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting, pagination, globalFilter },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onGlobalFilterChange: setGlobalFilter, // Add global filter change handler
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     globalFilterFn: (row, columnId, filterValue) => {
-      // Custom filter function to search in name column
       const search = filterValue.toLowerCase();
-      const value = row.getValue(columnId);
-      
-      if (typeof value === 'string') {
-        return value.toLowerCase().includes(search);
-      }
-      
-      // For other columns or if the value isn't a string
-      return String(value).toLowerCase().includes(search);
+      return row.getValue('name').toLowerCase().includes(search);
     },
   });
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
-        <div className='flex items-center justify-end h-[35px] w-full mb-2'>
-            <Search className='mr-[-30px] text-primary' />
-            <input 
-                type='text' 
-                placeholder='Search product by name' 
-                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
-                value={globalFilter}
-                onChange={handleSearchChange}
-            />
+      {/* Search and Add */}
+      <div className='flex items-center justify-end h-[35px] w-full mb-2'>
+        <Search className='mr-[-30px] text-primary' />
+        <input
+          type='text'
+          placeholder='Search Beverage by name'
+          className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
+          value={globalFilter}
+          onChange={handleSearchChange}
+        />
+        <div className="flex justify-end ml-2">
+          <button
+            onClick={() => setAddBeverage(true)}
+            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+          >
+            <CirclePlus />
+            Add New Beverage
+          </button>
         </div>
+      </div>
+
+      {/* Add Modal */}
+      {addBeverage && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              ADD NEW BEVERAGE
+              <button onClick={() => setAddBeverage(false)} className="text-gray-800 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </p>
+            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+              <label className="text-[15px] mb-2">Beverage Name</label>
+              <input
+                type="text"
+                name="name"
+                value={newBeverage.name}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
+              />
+              <label className="text-[15px] mb-2">Price</label>
+              <input
+                type="number"
+                name="price"
+                value={newBeverage.price}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                min={0}
+                required
+              />
+              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+                ADD NEW BEVERAGE 
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Update Modal */}
       {showUpdateModal && selectedRow && (
-        <div 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }} 
-          className="fixed inset-0 flex items-center justify-center z-1000"
-        >
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className='flex justify-between text-[19px] font-medium text-primary mb-8'>
-              UPDATE BEVERAGE
-              <span className='text-gray-800 hover:text-gray-600 font-normal'>
-                <button 
-                  onClick={() => setShowUpdateModal(false)}
-                  className='cursor-pointer'
-                >
-                  <X size={20} />
-                </button>
-              </span>
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              UPDATE Beverage
+              <button onClick={() => setShowUpdateModal(false)} className="text-gray-800 hover:text-gray-600">
+                <X size={20} />
+              </button>
             </p>
-            <form className='flex flex-col' onSubmit={handleUpdateSubmit}>
-              <label className='text-[15px] mb-2'>Product Name</label>
-              <input 
-                type='text'
+            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+              <label className="text-[15px] mb-2">Beverage Name</label>
+              <input
+                type="text"
                 name="name"
-                value={selectedRow.name || ''}
+                value={selectedRow.name}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
               />
-              
-              <label className='text-[15px] mb-2'>Price</label>
-              <input 
-                type='number'
+              <label className="text-[15px] mb-2">Price</label>
+              <input
+                type="number"
                 name="price"
-                value={selectedRow.price.toFixed(2) || ''}
+                value={selectedRow.price}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
+                required
               />
-              
-              <button 
-                type='submit'
-                className='bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-              >
-                UPDATE
+              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+                UPDATE MAIN Beverage
               </button>
             </form>
           </div>
@@ -209,8 +230,8 @@ const Beverage = () => {
             {table.getHeaderGroups().map(headerGroup => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map(header => (
-                  <th 
-                    key={header.id} 
+                  <th
+                    key={header.id}
                     scope="col"
                     className="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider border-gray-200"
                     style={{
@@ -246,8 +267,8 @@ const Beverage = () => {
               table.getRowModel().rows.map(row => (
                 <tr key={row.id} className="hover:bg-gray-50">
                   {row.getVisibleCells().map(cell => (
-                    <td 
-                      key={cell.id} 
+                    <td
+                      key={cell.id}
                       className="px-4 py-3 text-sm text-gray-600 font-medium border border-gray-200"
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -270,14 +291,14 @@ const Beverage = () => {
       <div className="flex items-center justify-between mt-4 px-1">
         <div className="flex-1 flex justify-between sm:hidden">
           <button
-            onClick={() => table.previousPage()} 
+            onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
           >
             Previous
           </button>
           <button
-            onClick={() => table.nextPage()} 
+            onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
           >
@@ -287,7 +308,7 @@ const Beverage = () => {
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <div>
             <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}</span> to{' '}
+              Showing <span className="font-medium">{data.length === 0 ? 0 : table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}</span> to{' '}
               <span className="font-medium">
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
@@ -308,14 +329,14 @@ const Beverage = () => {
                 &laquo;
               </button>
               <button
-                onClick={() => table.previousPage()} 
+                onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
                 className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
                 Previous
               </button>
               <button
-                onClick={() => table.nextPage()} 
+                onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
                 className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >

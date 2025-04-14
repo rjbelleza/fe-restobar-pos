@@ -7,177 +7,216 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { Search } from 'lucide-react';
-import { X } from 'lucide-react';
+import { CirclePlus, Search, X } from 'lucide-react';
 
 const Dessert = () => {
-  // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [globalFilter, setGlobalFilter] = useState(''); // ✅ Added for search
+  const [newDessert, setNewDessert] = useState({ name: '', price: '' });
+  const [globalFilter, setGlobalFilter] = useState('');
+  const [addDessert, setAddDessert] = useState(false);
 
-  // Update button handler
+  useEffect(() => {
+    fetch('/data/dessertProduct.json')
+      .then(res => res.json())
+      .then(setData)
+      .catch(err => console.error('Error fetching data:', err));
+  }, []);
+
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original); // Store the entire row data
+    setSelectedRow({ ...row.original });
     setShowUpdateModal(true);
   };
 
-  // Update modal submit handler
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    console.log('Updated data:', selectedRow);
+    const updated = data.map((item, index) =>
+      index === selectedRow.index ? selectedRow : item
+    );
+    setData(updated);
     setShowUpdateModal(false);
+    setSelectedRow(null);
   };
 
-  // Update modal input change handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSelectedRow(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const parsedValue = name === 'price' ? parseFloat(value) || 0 : value;
+
+    if (selectedRow) {
+      setSelectedRow(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
+    } else {
+      setNewDessert(prev => ({
+        ...prev,
+        [name]: parsedValue,
+      }));
+    }
   };
 
-  const stockColorCode = (stock_quantity) => {
-    if(stock_quantity <= 25) {
-        return 'bg-red-500'
-    } 
-    else if(stock_quantity > 25 && stock_quantity <= 50) {
-        return 'bg-yellow-500'
-    }
-    else {
-        return 'bg-green-500'
-    }
-  }
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const newEntry = {
+      name: newDessert.name,
+      price: Number(newDessert.price),
+    };
+    setData(prev => [...prev, newEntry]);
+    setAddDessert(false);
+    setNewDessert({ name: '', price: '' });
+  };
 
-  const capitalize = (string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+  const handleSearchChange = (e) => {
+    setGlobalFilter(e.target.value);
+  };
 
-  // Fetch data from dessertProduct.json
-  useEffect(() => {
-    fetch('/data/dessertProduct.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
-
-  // Define columns
-  const columns = useMemo(
-    () => [
-      {
-        id: 'rowNumber',
-        header: '#',
-        cell: ({ row }) => row.index + 1,
-        size: 50,
-        accessorFn: (row, index) => index + 1,
-      },
-      {
-        accessorKey: 'name',
-        header: 'Name',
-        cell: info => info.getValue(),
-        size: 190,
-      },
-      {
-        accessorKey: 'price',
-        header: 'Price',
-        cell: info => "₱" + info.getValue().toFixed(2),
-        size: 160,
-      },
-      {
-        id: 'actions',
-        header: 'Action',
-        cell: ({ row }) => (
-          <button 
-            onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Update
-          </button>
-        ),
-        size: 20,
-      },
-    ],
-    []
-  );
-
-  // Initialize the table
-  const table = useReactTable({
-    data: data,
-    columns,
-    state: {
-      sorting,
-      pagination,
-      globalFilter, // ✅ Added
+  const columns = useMemo(() => [
+    {
+      id: 'rowNumber',
+      header: '#',
+      cell: ({ row }) => row.index + 1,
+      size: 50,
     },
+    {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: info => info.getValue(),
+      size: 190,
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: info => "₱" + info.getValue().toFixed(2),
+      size: 160,
+    },
+    {
+      id: 'actions',
+      header: 'Action',
+      cell: ({ row }) => (
+        <button
+          onClick={() => handleUpdateClick({ ...row, index: row.index })}
+          className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+        >
+          Update
+        </button>
+      ),
+      size: 20,
+    },
+  ], []);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting, pagination, globalFilter },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onGlobalFilterChange: setGlobalFilter, // ✅ Added
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), // ✅ Needed for search
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    globalFilterFn: (row, columnId, filterValue) => {
+      const search = filterValue.toLowerCase();
+      return row.getValue('name').toLowerCase().includes(search);
+    },
   });
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
-        <div className='flex items-center justify-end h-[35px] w-full mb-2'>
-            <Search className='mr-[-30px] text-primary' />
-            <input 
-                type='text' 
-                placeholder='Search product by name' 
-                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
-                value={globalFilter} // ✅ Added
-                onChange={(e) => setGlobalFilter(e.target.value)} // ✅ Added
-            />
+      {/* Search and Add */}
+      <div className='flex items-center justify-end h-[35px] w-full mb-2'>
+        <Search className='mr-[-30px] text-primary' />
+        <input
+          type='text'
+          placeholder='Search Dessert by name'
+          className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
+          value={globalFilter}
+          onChange={handleSearchChange}
+        />
+        <div className="flex justify-end ml-2">
+          <button
+            onClick={() => setAddDessert(true)}
+            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+          >
+            <CirclePlus />
+            Add New Dessert
+          </button>
         </div>
+      </div>
 
-      {/* Update Modal */}
-      {showUpdateModal && selectedRow && (
-        <div 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }} 
-          className="fixed inset-0 flex items-center justify-center z-1000"
-        >
+      {/* Add Modal */}
+      {addDessert && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className='flex justify-between text-[19px] font-medium text-primary mb-8'>
-              UPDATE MAIN DISH
-              <span className='text-gray-800 hover:text-gray-600 font-normal'>
-                <button 
-                  onClick={() => setShowUpdateModal(false)}
-                  className='cursor-pointer'
-                >
-                  <X size={20} />
-                </button>
-              </span>
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              ADD NEW DESSERT
+              <button onClick={() => setAddDessert(false)} className="text-gray-800 hover:text-gray-600">
+                <X size={20} />
+              </button>
             </p>
-            <form className='flex flex-col' onSubmit={handleUpdateSubmit}>
-              <label className='text-[15px] mb-2'>Product Name</label>
-              <input 
-                type='text'
+            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+              <label className="text-[15px] mb-2">Dessert Name</label>
+              <input
+                type="text"
                 name="name"
-                value={selectedRow.name || ''}
+                value={newDessert.name}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
               />
-              
-              <label className='text-[15px] mb-2'>Price</label>
-              <input 
-                type='number'
+              <label className="text-[15px] mb-2">Price</label>
+              <input
+                type="number"
                 name="price"
-                value={selectedRow.price.toFixed(2) || ''}
+                value={newDessert.price}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
+                required
               />
-              
-              <button 
-                type='submit'
-                className='bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-              >
-                UPDATE
+              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+                ADD NEW DESSERT 
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+       {/* Update Modal */}
+       {showUpdateModal && selectedRow && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              UPDATE DESSERT
+              <button onClick={() => setShowUpdateModal(false)} className="text-gray-800 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </p>
+            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+              <label className="text-[15px] mb-2">Dessert Name</label>
+              <input
+                type="text"
+                name="name"
+                value={selectedRow.name}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
+              />
+              <label className="text-[15px] mb-2">Price</label>
+              <input
+                type="number"
+                name="price"
+                value={selectedRow.price}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                min={0}
+                required
+              />
+              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+                UPDATE DESSERT
               </button>
             </form>
           </div>
