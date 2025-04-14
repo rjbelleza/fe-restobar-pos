@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "order_type": "dine-in",
+        "totalAmount": 1000,
+        "dateTime": "2025-03-26 02:56:34" 
+    },
+    {
+        "id": 2,
+        "order_type": "take-out",
+        "totalAmount": 1000,
+        "dateTime": "2025-03-26 02:56:34" 
+    },
+    {
+        "id": 3,
+        "order_type": "dine-in",
+        "totalAmount": 1000,
+        "dateTime": "2025-03-26 02:56:34" 
+    },
+    {
+        "id": 4,
+        "order_type": "take-out",
+        "totalAmount": 1000,
+        "dateTime": "2025-03-26 02:56:34" 
+    },
+    {
+        "id": 5,
+        "order_type": "dine-in",
+        "totalAmount": 1000,
+        "dateTime": "2025-03-26 02:56:34" 
+    }
+]

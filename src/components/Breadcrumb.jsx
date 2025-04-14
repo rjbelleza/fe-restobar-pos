@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation } from "react-router";
 
-const Breadcrumb = ({ currentMenu }) => {
+const Breadcrumb = () => {
   const location = useLocation();
 
   const handleCurrentLoc = () => {
@@ -33,4 +33,3 @@ const Breadcrumb = ({ currentMenu }) => {
 };
 
 export default Breadcrumb;
-  

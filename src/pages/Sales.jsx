@@ -1,6 +1,7 @@
 import AdminSidemenu from "../layouts/AdminSidemenu";
 import Header from "../layouts/Header";
 import Breadcrumb from "../components/Breadcrumb";
+import SalesTable from "../components/SalesTable";
 import { useState } from "react";
 
 const Sales = () => {
@@ -14,7 +15,7 @@ const Sales = () => {
                 <div className="flex flex-col gap-5 w-full pr-[10px] mt-2">
                     <Breadcrumb />
                     <div className='flex justify-between font-medium text-primary mb-3'>
-                        
+                        <SalesTable />
                     </div>
               </div>
             </div>

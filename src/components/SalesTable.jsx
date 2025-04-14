@@ -7,99 +7,63 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X } from 'lucide-react';
+import { format, parseISO, isSameDay } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { CirclePlus } from 'lucide-react';
+import { Search } from 'lucide-react';
 
-const OthersTable = () => {
+const SalesTable = () => {
+  // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [addIngredients, setAddIngredients] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
-  const [globalFilter, setGlobalFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDate, setSearchDate] = useState('');
 
-  const handleUpdateClick = (row) => {
-    setSelectedRow(row.original);
-    setShowUpdateModal(true);
-  };
+  const navigate = useNavigate();
 
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (showUpdateModal) {
-      setSelectedRow(prev => ({ ...prev, [name]: value }));
-    } else {
-      setNewIngredient(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const newEntry = {
-      name: newIngredient.name,
-      stock: Number(newIngredient.stock),
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddIngredients(false);
-    setNewIngredient({ name: '', stock: '' });
-  };
-
-  const stockColorCode = (stock_quantity) => {
-    if (stock_quantity <= 25) return 'bg-red-500';
-    else if (stock_quantity <= 50) return 'bg-yellow-500';
-    else return 'bg-green-500';
-  };
-
+  // Fetch data from recentTrans.json
   useEffect(() => {
-    fetch('/data/others.json')
+    fetch('/data/recentTrans.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
   }, []);
 
+  // Define columns
   const columns = useMemo(
     () => [
       {
         id: 'rowNumber',
         header: '#',
         cell: ({ row }) => row.index + 1,
-        accessorFn: (row, index) => index + 1,
         size: 50,
+        accessorFn: (row, index) => index + 1,
       },
       {
-        accessorKey: 'name',
-        header: 'Name',
+        accessorKey: 'customer',
+        header: 'Customer',
         cell: info => info.getValue(),
         size: 190,
       },
       {
-        accessorKey: 'stock',
-        header: 'Quantity',
-        cell: info => (
-          <p className={`${stockColorCode(info.getValue())} text-white py-1 px-3 w-[48px]`}>
-            {info.getValue()}
-          </p>
-        ),
+        accessorKey: 'totalAmount',
+        header: 'Total Amount',
+        cell: info => `₱${info.getValue().toFixed(2)}`,
+        size: 160,
+      },
+      {
+        accessorKey: 'dateTime',
+        header: 'Date & Time',
+        cell: info => format(parseISO(info.getValue()), "yyyy-MM-dd, hh:mm:ss a"),
         size: 160,
       },
       {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
-          <button
-            onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Update
+          <button className="text-white bg-blue-700 hover:bg-blue-500 cursor-pointer rounded-sm px-4 py-1">
+            View
           </button>
         ),
         size: 20,
@@ -108,17 +72,25 @@ const OthersTable = () => {
     []
   );
 
+  // Filter data based on search term and date
+  const filteredData = useMemo(() => {
+    return data.filter(item => {
+      const matchesSearch = item.customer.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDate = searchDate ? isSameDay(parseISO(item.dateTime), new Date(searchDate)) : true;
+      return matchesSearch && matchesDate;
+    });
+  }, [data, searchTerm, searchDate]);
+
+  // Initialize the table
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
       pagination,
-      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -126,69 +98,53 @@ const OthersTable = () => {
   });
 
   return (
-    <div className="h-[455px] w-full p-1 mt-[-35px]">
-      <div className="flex items-center justify-end h-[35px] w-full mb-2">
-        <Search className="mr-[-30px] text-primary" />
-        <input
-          type="text"
-          placeholder="Search item by name"
-          className="text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-        />
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddIngredients(true)}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Item  
-          </button>
+    <div className="h-[495px] w-full p-1">
+      {/* Search Controls */}
+      <div className="flex flex-col w-full sm:flex-row gap-2 mb-4">
+        <div className='flex justify-between w-full gap-20 h-[37px]'>
+          <div className='text-[23px] font-medium text-sky-800 w-[200px]'>Sales List</div>
+            <div className='flex justify-end gap-3 w-full'>
+              <div className='flex items-center'>
+                <Search className='mr-[-30px] text-gray-600' />
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Search by keyword"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-[37px] w-[170px] text-[13px] mr-3 py-1 pl-9 border border-gray-500 rounded-sm shadow-sm"
+                />
+              </div>
+              <div className='flex items-center gap-2 h-[37px]'>
+                  <label className='text-[15px]'>Filter by date:</label>
+                  <input
+                      type="date"
+                      id="date"
+                      value={searchDate}
+                      onChange={(e) => setSearchDate(e.target.value)}
+                      className="h-[35px] px-3 py-2 border border-gray-500 rounded-sm shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  {searchDate && (
+                      <button
+                      onClick={() => setSearchDate('')}
+                      className="ml-2 px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+                      >
+                      Clear
+                      </button>
+                  )}
+              </div>
+              <div className='flex justify-end ml-2'>
+                <button 
+                    onClick={() => navigate('/new-sales')}
+                    className='flex items-center gap-2 h-[35px] bg-blue-800 text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-blue-700'
+                >
+                  <CirclePlus />
+                  New Sale Entry
+                </button>
+              </div>
+            </div>
         </div>
       </div>
-
-      {/* Add item Modal */}
-      {addIngredients && (
-        <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              ADD NEW ITEM
-              <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddIngredients(false)} className="cursor-pointer">
-                  <X size={20} />
-                </button>
-              </span>
-            </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
-              <label className="text-[15px] mb-2">Item Name</label>
-              <input
-                type="text"
-                name="name"
-                value={newIngredient.name}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                required
-              />
-              <label className="text-[15px] mb-2">Quantity</label>
-              <input
-                type="number"
-                name="stock"
-                value={newIngredient.stock}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                min={0}
-                required
-              />
-              <button
-                type="submit"
-                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-              >
-                ADD NEW ITEM
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
@@ -279,10 +235,10 @@ const OthersTable = () => {
               <span className="font-medium">
                 {Math.min(
                   (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  data.length
+                  filteredData.length
                 )}
               </span>{' '}
-              of <span className="font-medium">{data.length}</span> results
+              of <span className="font-medium">{filteredData.length}</span> results
             </p>
           </div>
           <div>
@@ -325,4 +281,4 @@ const OthersTable = () => {
   );
 };
 
-export default OthersTable;
+export default SalesTable;

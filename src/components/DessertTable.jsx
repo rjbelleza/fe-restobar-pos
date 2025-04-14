@@ -7,75 +7,73 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus } from 'lucide-react';
-import { Search } from 'lucide-react';
-import { X } from 'lucide-react';
+import { CirclePlus, Search, X } from 'lucide-react';
 
 const DessertTable = () => {
-  // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [addIngredients, setAddIngredients] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
+  const [globalFilter, setGlobalFilter] = useState('');
 
-  // Update button handler
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original); // Store the entire row data
+    setSelectedRow(row.original);
     setShowUpdateModal(true);
   };
 
-  // Update modal submit handler
   const handleUpdateSubmit = (e) => {
     e.preventDefault();
-    // Here you would typically make an API call to update the data
-    console.log('Updated data:', selectedRow);
+    const updatedData = data.map(item =>
+      item.name === selectedRow.name ? selectedRow : item
+    );
+    setData(updatedData);
     setShowUpdateModal(false);
   };
 
-  // Update modal input change handler
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setSelectedRow(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (showUpdateModal) {
+      setSelectedRow(prev => ({ ...prev, [name]: value }));
+    } else {
+      setNewIngredient(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    const newEntry = {
+      name: newIngredient.name,
+      stock: Number(newIngredient.stock),
+    };
+    setData(prev => [...prev, newEntry]);
+    setAddIngredients(false);
+    setNewIngredient({ name: '', stock: '' });
   };
 
   const stockColorCode = (stock_quantity) => {
-    if(stock_quantity <= 25) {
-        return 'bg-red-500'
-    } 
-    else if(stock_quantity > 25 && stock_quantity <= 50) {
-        return 'bg-yellow-500'
-    }
-    else {
-        return 'bg-green-500'
-    }
-  }
-
-
-  const capitalize = (string) => {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-
+    if (stock_quantity <= 25) return 'bg-red-500';
+    else if (stock_quantity <= 50) return 'bg-yellow-500';
+    else return 'bg-green-500';
+  };
 
   useEffect(() => {
-    fetch('/data/dessert.json')
+    fetch('/data/beverage.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
   }, []);
 
-  // Define columns
   const columns = useMemo(
     () => [
       {
         id: 'rowNumber',
         header: '#',
         cell: ({ row }) => row.index + 1,
-        size: 50,
         accessorFn: (row, index) => index + 1,
+        size: 50,
       },
       {
         accessorKey: 'name',
@@ -86,14 +84,18 @@ const DessertTable = () => {
       {
         accessorKey: 'stock',
         header: 'Quantity',
-        cell: info => <p className={`${stockColorCode(info.getValue())} text-white py-1 px-3 w-[48px]`}>{info.getValue()}</p>,
+        cell: info => (
+          <p className={`${stockColorCode(info.getValue())} text-white py-1 px-3 w-[48px]`}>
+            {info.getValue()}
+          </p>
+        ),
         size: 160,
       },
       {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
-          <button 
+          <button
             onClick={() => handleUpdateClick(row)}
             className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
           >
@@ -106,16 +108,17 @@ const DessertTable = () => {
     []
   );
 
-  // Initialize the table
   const table = useReactTable({
-    data: data,
+    data,
     columns,
     state: {
       sorting,
       pagination,
+      globalFilter,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -124,58 +127,63 @@ const DessertTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
-        <div className='flex items-center justify-end h-[35px] w-full mb-2'>
-            <Search className='mr-[-30px] text-primary' />
-            <input 
-                type='text' 
-                placeholder='Search product by name' 
-                className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm' 
-            />
+      <div className="flex items-center justify-end h-[35px] w-full mb-2">
+        <Search className="mr-[-30px] text-primary" />
+        <input
+          type="text"
+          placeholder="Search dessert by name"
+          className="text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm"
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+        />
+        <div className="flex justify-end ml-2">
+          <button
+            onClick={() => setAddIngredients(true)}
+            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+          >
+            <CirclePlus />
+            Add New Dessert  
+          </button>
         </div>
+      </div>
 
-      {/* Update Modal */}
-      {showUpdateModal && selectedRow && (
-        <div 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }} 
-          className="fixed inset-0 flex items-center justify-center z-1000"
-        >
+      {/* Add Dessert Modal */}
+      {addIngredients && (
+        <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className='flex justify-between text-[19px] font-medium text-primary mb-8'>
-              UPDATE INGREDIENTS
-              <span className='text-gray-800 hover:text-gray-600 font-normal'>
-                <button 
-                  onClick={() => setShowUpdateModal(false)}
-                  className='cursor-pointer'
-                >
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              ADD NEW DESSERT
+              <span className="text-gray-800 hover:text-gray-600 font-normal">
+                <button onClick={() => setAddIngredients(false)} className="cursor-pointer">
                   <X size={20} />
                 </button>
               </span>
             </p>
-            <form className='flex flex-col' onSubmit={handleUpdateSubmit}>
-              <label className='text-[15px] mb-2'>Product Name</label>
-              <input 
-                type='text'
+            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+              <label className="text-[15px] mb-2">Dessert Name</label>
+              <input
+                type="text"
                 name="name"
-                value={selectedRow.name || ''}
+                value={newIngredient.name}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
               />
-              
-              <label className='text-[15px] mb-2'>Quantity</label>
-              <input 
-                type='number'
+              <label className="text-[15px] mb-2">Quantity</label>
+              <input
+                type="number"
                 name="stock"
-                value={selectedRow.stock || ''}
+                value={newIngredient.stock}
                 onChange={handleInputChange}
-                className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
+                required
               />
-              
-              <button 
-                type='submit'
-                className='bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+              <button
+                type="submit"
+                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
               >
-                UPDATE
+                ADD NEW DESSERT
               </button>
             </form>
           </div>
