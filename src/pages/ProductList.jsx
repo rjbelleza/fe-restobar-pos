@@ -4,7 +4,8 @@ import Breadcrumb from "../components/Breadcrumb";
 import BeverageTable from '../components/BeverageTable';
 import DessertTable from "../components/DessertTable";
 import OthersTable from "../components/OthersTable";
-import MainDish from "../components/MainDish";
+import MainDish from "../components/ProductList/MainDish";
+import Beverage from "../components/ProductList/Beverage";
 import { useState } from "react";
 
 const Inventory = () => {
@@ -33,7 +34,7 @@ const Inventory = () => {
                     {category == "mainDish" ? (
                         <MainDish />
                     ) : category == "beverage" ? (
-                        <BeverageTable />
+                        <Beverage />
                     ) : category == "desserts" ? (
                         <DessertTable /> 
                     ) : category == "others" ? (

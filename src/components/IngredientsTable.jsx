@@ -60,7 +60,6 @@ const IngredientsTable = () => {
   }
 
 
-  // Fetch data from recentTrans.json
   useEffect(() => {
     fetch('/data/products.json')
       .then(response => response.json())
@@ -86,7 +85,7 @@ const IngredientsTable = () => {
       },
       {
         accessorKey: 'stock',
-        header: 'Stock qty.',
+        header: 'Quantity',
         cell: info => <p className={`${stockColorCode(info.getValue())} text-white py-1 px-3 w-[48px]`}>{info.getValue()}</p>,
         size: 160,
       },

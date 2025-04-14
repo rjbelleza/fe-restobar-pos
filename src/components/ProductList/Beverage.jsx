@@ -7,11 +7,10 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus } from 'lucide-react';
 import { Search } from 'lucide-react';
 import { X } from 'lucide-react';
 
-const OthersTable = () => {
+const Beverage = () => {
   // Data state
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
@@ -60,8 +59,9 @@ const OthersTable = () => {
   }
 
 
+  // Fetch data from recentTrans.json
   useEffect(() => {
-    fetch('/data/others.json')
+    fetch('/data/menu.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
@@ -84,9 +84,9 @@ const OthersTable = () => {
         size: 190,
       },
       {
-        accessorKey: 'stock',
-        header: 'Quantity',
-        cell: info => <p className={`${stockColorCode(info.getValue())} text-white py-1 px-3 w-[48px]`}>{info.getValue()}</p>,
+        accessorKey: 'price',
+        header: 'Price',
+        cell: info => "₱" + info.getValue().toFixed(2),
         size: 160,
       },
       {
@@ -161,11 +161,11 @@ const OthersTable = () => {
                 className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                      
               />
               
-              <label className='text-[15px] mb-2'>Quantity</label>
+              <label className='text-[15px] mb-2'>Price</label>
               <input 
                 type='number'
-                name="stock"
-                value={selectedRow.stock || ''}
+                name="price"
+                value={selectedRow.price.toFixed(2) || ''}
                 onChange={handleInputChange}
                 className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
                 min={0}
@@ -317,4 +317,4 @@ const OthersTable = () => {
   );
 };
 
-export default OthersTable;
+export default Beverage;
