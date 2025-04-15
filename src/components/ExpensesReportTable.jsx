@@ -5,16 +5,16 @@ import {
   getFilteredRowModel,
   getSortedRowModel,
   flexRender,
-} from '@tanstack/react-table'; 
+} from '@tanstack/react-table';
 
-const SalesReportTable = () => {
+const ExpensesReportTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [searchDate, setSearchDate] = useState('');
 
   useEffect(() => {
-    fetch('/data/salesReport.json')
+    fetch('/data/expensesReport.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
@@ -23,22 +23,10 @@ const SalesReportTable = () => {
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'product_name',
-        header: 'Product Name',
+        accessorKey: 'description',
+        header: 'Description',
         cell: info => info.getValue(),
         size: 190,
-      },
-      {
-        accessorKey: 'price',
-        header: 'Price',
-        cell: info => "₱" + info.getValue().toFixed(2),
-        size: 160,
-      },
-      {
-        accessorKey: 'quantity',
-        header: 'Quantity',
-        cell: info => info.getValue(),
-        size: 160,
       },
       {
         accessorKey: 'totalAmount',
@@ -117,7 +105,7 @@ const SalesReportTable = () => {
       </div>
 
       {/* Table */}
-      <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
+      <div className="h-full overflow-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -162,6 +150,9 @@ const SalesReportTable = () => {
                     <td
                       key={cell.id}
                       className="px-4 py-3 text-sm text-gray-600 font-medium border border-gray-200"
+                      style={{
+                        width: cell.column.getSize(),
+                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -181,23 +172,23 @@ const SalesReportTable = () => {
                 </td> 
               </tr> 
             )}
-            {/* Total Sales Row */}
-            {data.length > 0 && (
-              <tr className="font-semibold sticky bottom-0 bg-secondary">
-                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={3}>
-                  Total Sales
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{totalSalesAmount.toFixed(2)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={1}></td>
-              </tr>
-            )}
           </tbody>
+          {/* Footer with Total Sales */}
+          <tfoot className="sticky bottom-0 bg-secondary">
+            <tr>
+              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200">
+                Total Expenses
+              </td>
+              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200">
+                ₱{totalSalesAmount.toFixed(2)}
+              </td>
+              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
   );
 };
 
-export default SalesReportTable;
+export default ExpensesReportTable;
