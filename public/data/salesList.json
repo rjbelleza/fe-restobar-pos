@@ -1,0 +1,38 @@
+[
+    {
+        "id": 1,
+        "order_type": "Dine-in",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    },
+    {
+        "id": 2,
+        "order_type": "Take-out",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    },
+    {
+        "id": 3,
+        "order_type": "Dine-in",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    },
+    {
+        "id": 4,
+        "order_type": "Take-out",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    },
+    {
+        "id": 5,
+        "order_type": "Dine-in",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    },
+    {
+        "id": 6,
+        "order_type": "Take-out",
+        "total_amount": 589.67,
+        "dateTime": "2025-03-26 02:56:34"
+    }
+]
