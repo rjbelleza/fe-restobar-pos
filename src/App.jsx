@@ -9,6 +9,7 @@ import Sales from "./pages/Sales";
 import Expenses from "./pages/Expenses";
 import SalesReport from "./pages/SalesReport";
 import ExpensesReport from "./pages/ExpensesReport";
+import UserList from "./pages/UsersList";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ element, role }) => {
@@ -43,6 +44,7 @@ const App = () => {
                 {/* Protected Staff Routes */}
                 <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="staff" />} />
                 <Route path="/inventory" element={<ProtectedRoute element={<Inventory />} role={["admin", "staff"]} />} />
+                <Route path="/users" element={<ProtectedRoute element={<UserList />} role={["admin", "staff"]} />} />
                 </Routes>
             </AuthProvider>
         </Router>

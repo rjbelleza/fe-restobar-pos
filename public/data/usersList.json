@@ -1,0 +1,18 @@
+[
+    {
+        "id": 1,
+        "fname": "Rey lois",
+        "lname": "Baer",
+        "mname": "G",
+        "username": "reylois",
+        "role": "admin"
+    },
+    {
+        "id": 1,
+        "fname": "Maria",
+        "lname": "Agata",
+        "mname": "G",
+        "username": "maria",
+        "role": "staff"
+    }
+]
