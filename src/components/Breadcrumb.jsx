@@ -23,6 +23,9 @@ const Breadcrumb = () => {
       else if (location.pathname === '/sales') {
         return 'SALES MANAGEMENT'
       }
+      else if (location.pathname === '/sales-report') {
+        return 'SALES REPORT'
+      }
   }
 
   return (
