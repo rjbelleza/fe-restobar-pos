@@ -2,6 +2,7 @@ import React from 'react';
 import Header from '../layouts/Header';
 import AdminSidemenu from '../layouts/AdminSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
+import SalesReportTable from '../components/SalesReportTable';
 
 
 const SalesReport = () => {
@@ -13,7 +14,7 @@ const SalesReport = () => {
         <AdminSidemenu />
         <div className="flex flex-col gap-5 w-full h-fit pr-[10px] mt-2">
           <Breadcrumb />
-
+          <SalesReportTable />
         </div>
       </div>
     </div>
