@@ -119,10 +119,10 @@ const AdminSidemenu = () => {
 
 const SideMenuBtn = () => {
     const location = useLocation();
-    const [isReportsOpen, setIsReportsOpen] = useState(false);
+    const { isClicked, clicked } = useAuth();
 
     const toggleReports = () => {
-        setIsReportsOpen(!isReportsOpen);
+        clicked(!isClicked);
     };
 
     return (
@@ -187,7 +187,7 @@ const SideMenuBtn = () => {
                     <BookText />
                 </button>
 
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isReportsOpen ? 'max-h-40' : 'max-h-0'}`}>
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isClicked ? 'max-h-40' : 'max-h-0'}`}>
                     <div className="flex flex-col gap-1 mt-1 pl-5">
                         <Link to="/sales-report" 
                             className={`flex justify-between items-center px-5 h-[35px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
