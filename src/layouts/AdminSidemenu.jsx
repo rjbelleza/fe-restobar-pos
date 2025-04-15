@@ -9,7 +9,8 @@ import {
     ReceiptText , 
     ChartArea, 
     Users, 
-    SquareChartGantt 
+    SquareChartGantt,
+    BookText    
 } from 'lucide-react';
 
 const AdminSidemenu = () => {
@@ -18,9 +19,7 @@ const AdminSidemenu = () => {
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(true);
 
-
     const toggleMenu = () => setIsOpen(!isOpen);
-
 
     useEffect(() => {
         if (!loading && !user) {
@@ -28,16 +27,13 @@ const AdminSidemenu = () => {
         }
     }, [user, loading]);
 
-
     useEffect(() => {
         location.pathname == "/new-sales" && setIsOpen(false);
     }, [])
 
-
     if (loading || !user) {
         return <p>Loading...</p>;
     }
-
 
     return (
         <div className={`${isOpen ? 'w-60' : 'w-20'} bg-primary flex flex-col bg-[url('/images/sidemenu.png')] bg-cover bg-center mt-2 rounded-tr-md
@@ -67,127 +63,157 @@ const AdminSidemenu = () => {
                 </div>
             </div>
 
-            {/* Decreased Sidemenu width*/}
             {!isOpen && (
-                    <div
-                        className="flex flex-col gap-5 h-full mt-20 bg-primary"
-                    >
-                        <Link to="/admin-dashboard" 
-                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                       hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                        ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                        > <LayoutDashboard />
-                        </Link>
-        
-                        <Link to="/inventory" 
-                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                        hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                        ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                        ><PackageOpen />
-                        </Link>
+                <div className="flex flex-col gap-5 h-full mt-20 bg-primary">
+                    <Link to="/admin-dashboard" 
+                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[14px] font-medium
+                                    ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                    > <LayoutDashboard />
+                    </Link>
+    
+                    <Link to="/inventory" 
+                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[14px] font-medium
+                                    ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                    ><PackageOpen />
+                    </Link>
 
-                        <Link to="/product-list" 
-                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                        hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                        ${location.pathname ==   "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                        ><SquareChartGantt />
-                        </Link>
-                                
-                        <Link to="/sales" 
-                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                ${location.pathname ==   "/sales" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                        ><HandCoins />
-                        </Link>
-        
-                        <Link to="/expenses" 
-                              className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                ${location.pathname ==   "/expenses" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                        ><ReceiptText  />
-                        </Link>
-        
-                        <Link to="/admin-dashboard" 
-                              className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                       hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-                        ><ChartArea />
-                        </Link>
-        
-                        <Link to="/admin-dashboard" 
-                              className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                       hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-                        ><Users />
-                        </Link>
-        
-                    </div>
+                    <Link to="/product-list" 
+                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[14px] font-medium
+                                    ${location.pathname == "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                    ><SquareChartGantt />
+                    </Link>
+                            
+                    <Link to="/sales" 
+                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                            hover:text-black transition-all ease-in-out text-[14px] font-medium
+                            ${location.pathname == "/sales" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                    ><HandCoins />
+                    </Link>
+    
+                    <Link to="/expenses" 
+                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                            hover:text-black transition-all ease-in-out text-[14px] font-medium
+                            ${location.pathname == "/expenses" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                    ><ReceiptText  />
+                    </Link>
+    
+                    <Link to="/sales-report" 
+                        className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+                    ><BookText />
+                    </Link>
+    
+                    <Link to="/admin-dashboard" 
+                        className="flex justify-center items-center h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+                    ><Users />
+                    </Link>
+                </div>
             )}
         </div>
     );
 }
 
 const SideMenuBtn = () => {
+    const location = useLocation();
+    const [isReportsOpen, setIsReportsOpen] = useState(false);
 
+    const toggleReports = () => {
+        setIsReportsOpen(!isReportsOpen);
+    };
 
     return (
-        <div className="flex flex-col gap-3 h-full w-full text-white font-light">
+        <div className="flex flex-col gap-3 w-full text-white font-light">
             <Link to="/admin-dashboard" 
-                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium
-                             ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}
-                            `}
+                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                        hover:text-black transition-all ease-in-out text-[14px] font-medium
+                        ${location.pathname == "/admin-dashboard" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                        `}
             > 
-            <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard</p>
-            <LayoutDashboard />
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard</p>
+                <LayoutDashboard />
             </Link>
 
             <Link to="/inventory" 
-                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                            hover:text-black transition-all ease-in-out text-[14px] font-medium
-                            ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
-                            `}
-            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Inventory</p>
-            <PackageOpen />
+                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                        hover:text-black transition-all ease-in-out text-[14px] font-medium
+                        ${location.pathname == "/inventory" ? 'bg-[#FFDE59]' : 'bg-secondary'}
+                        `}
+            > 
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Inventory</p>
+                <PackageOpen />
             </Link> 
 
             <Link to="/product-list" 
-                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                     hover:text-black transition-all ease-in-out text-[14px] font-medium
                     ${location.pathname == "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                     `}
-            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Product List</p>
-            <SquareChartGantt />
+            > 
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Product List</p>
+                <SquareChartGantt />
             </Link>
 
             <Link to="/sales" 
-                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                     hover:text-black transition-all ease-in-out text-[14px] font-medium
                     ${location.pathname == "/sales" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                     `}
-            > <p className='flex justify-center items-center text-[14px] w-full h-full'>Sales</p>
-            <HandCoins />
+            > 
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Sales</p>
+                <HandCoins />
             </Link>
 
             <Link to="/expenses" 
-                  className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                     hover:text-black transition-all ease-in-out text-[14px] font-medium
                     ${location.pathname == "/expenses" ? 'bg-[#FFDE59]' : 'bg-secondary'}
                     `}
-            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Expenses</p>
-            <ReceiptText  />
+            >
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Expenses</p>
+                <ReceiptText  />
             </Link>
 
-            <Link to="/admin-dashboard" 
-                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Reports</p>
-            <ChartArea />
-            </Link>
+            <div className="flex flex-col">
+                <button
+                    onClick={toggleReports}
+                    className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                            hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary`}
+                >
+                    <p className='flex justify-center items-center text-[14px] w-full h-full'>Reports</p>
+                    <BookText />
+                </button>
+
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isReportsOpen ? 'max-h-40' : 'max-h-0'}`}>
+                    <div className="flex flex-col gap-1 mt-1 pl-5">
+                        <Link to="/sales-report" 
+                            className={`flex justify-between items-center px-5 h-[35px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[12px] font-medium
+                                    ${location.pathname == "/sales-report" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                        >
+                            <p className='flex justify-center items-center text-[12px] w-full h-full'>Sales Report</p>
+                        </Link>
+
+                        <Link to="/expenses-report" 
+                            className={`flex justify-between items-center px-5 h-[35px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[12px] font-medium
+                                    ${location.pathname == "/expenses-report" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                        >
+                            <p className='flex justify-center items-center text-[12px] w-full h-full'>Expenses Report</p>
+                        </Link>
+                    </div>
+                </div>
+            </div>
 
             <Link to="/admin-dashboard" 
-                  className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                           hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
-            ><p className='flex justify-center items-center text-[14px] w-full h-full'>Users</p>
-            <Users />
+                className="flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                        hover:text-black transition-all ease-in-out text-[14px] font-medium bg-secondary"
+            >
+                <p className='flex justify-center items-center text-[14px] w-full h-full'>Users</p>
+                <Users />
             </Link>
         </div>
     );

@@ -9,7 +9,7 @@ import ExpensesTable from '../components/ExpensesTable';
 const Expenses = () => {
 
   return (
-    <div className="h-screen w-screen flex flex-col gap-1">
+    <div className="h-screen w-screen flex flex-col gap-1 overflow-x-hidden">
       <Header />
       <div className="flex w-full h-full gap-3">
         <AdminSidemenu />
