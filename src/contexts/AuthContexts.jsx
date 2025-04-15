@@ -8,10 +8,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isClicked, setIsClicked] = useState(false);
+  const [isTriggered, setIsTriggered] = useState(false);
 
   const clicked = (state) => {
     setIsClicked(state);
     return isClicked;
+  }
+
+  const triggered = (state) => {
+    setIsTriggered(state);
+    return isTriggered;
   }
   
   // Check if user is logged in on mount
@@ -87,7 +93,7 @@ export const AuthProvider = ({ children }) => {
   };
   
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, isClicked, clicked }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, register, isClicked, clicked, isTriggered, triggered }}>
       {children}
     </AuthContext.Provider>
   );

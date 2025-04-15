@@ -14,12 +14,13 @@ import {
 } from 'lucide-react';
 
 const AdminSidemenu = () => {
-    const { user, loading } = useAuth();
+    const { user, loading, isClicked, clicked, triggered, isTriggered } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isOpen, setIsOpen] = useState(true);
 
-    const toggleMenu = () => setIsOpen(!isOpen);
+    const toggleMenu = () => clicked(!isClicked);
+
+    const toggleSidemenu = () => triggered(!isTriggered);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -27,27 +28,23 @@ const AdminSidemenu = () => {
         }
     }, [user, loading]);
 
-    useEffect(() => {
-        location.pathname == "/new-sales" && setIsOpen(false);
-    }, [])
-
     if (loading || !user) {
         return <p>Loading...</p>;
     }
 
     return (
-        <div className={`${isOpen ? 'w-60' : 'w-20'} bg-primary flex flex-col bg-[url('/images/sidemenu.png')] bg-cover bg-center mt-2 rounded-tr-md
+        <div className={`${isTriggered ? 'w-60' : 'w-20'} bg-primary flex flex-col bg-[url('/images/sidemenu.png')] bg-cover bg-center mt-2 rounded-tr-md
                         shadow-[2px_0px_10px_gray] bg-opacity-30 sticky left-0 items-center p-3 transition-all ease-in-out`}
         >
-            <div className={`${!isOpen ? 'justify-center' : 'justify-end'} flex w-full`}>
+            <div className={`${!isTriggered ? 'justify-center' : 'justify-end'} flex w-full`}>
                 <button 
                     className='cursor-pointer hover:bg-red-400 rounded-md p-1 transition-all'
-                    onClick={toggleMenu}
+                    onClick={toggleSidemenu}
                 >
                     <Menu size={30} className='text-secondary' />
                 </button>
             </div>
-            <div className={`${!isOpen && 'hidden'} flex flex-col gap-1 h-fit w-50 rounded-lg mt-3`}>
+            <div className={`${!isTriggered && 'hidden'} flex flex-col gap-1 h-fit w-50 rounded-lg mt-3`}>
                 <div className="flex flex-col items-center w-full">
                     <p className="text-[12px] w-full font-medium text-white">Profile</p>
                     <div className='border border-white w-full mb-3 mt-1'></div>
@@ -63,7 +60,7 @@ const AdminSidemenu = () => {
                 </div>
             </div>
 
-            {!isOpen && (
+            {!isTriggered && (
                 <div className="flex flex-col gap-5 h-full mt-20 bg-primary">
                     <Link to="/admin-dashboard" 
                         className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
