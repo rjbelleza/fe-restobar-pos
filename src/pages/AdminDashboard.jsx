@@ -1,9 +1,7 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 import Header from '../layouts/Header';
 import AdminSidemenu from '../layouts/AdminSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
-import BarGraph from '../components/BarGraph';
 import Card from '../components/Card';
 import ColumnChart from '../components/ColumnChart';
 
