@@ -182,7 +182,7 @@ const MainDish = () => {
 
       {/* Update Modal */}
       {showUpdateModal && selectedRow && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               UPDATE MAIN DISH
