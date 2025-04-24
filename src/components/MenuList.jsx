@@ -1,10 +1,13 @@
 import MenuCard from "../components/MenuCard";
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
-    const [discountPercent, setDiscountPercent] = useState(0);
+    const [discountPercent, setDiscountPercent] = useState(null);
     const [menuItems, setMenuItems] = useState([]);
+    const [amountPaid, setAmountPaid] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState('Cash');
 
     useEffect(() => {
         fetch('/data/mainDish.json')
@@ -15,7 +18,6 @@ const MenuList = () => {
                 return response.json();
             })
             .then(jsonData => {
-                // Initialize quantity for each menu item
                 const itemsWithQuantity = jsonData.map(item => ({
                     ...item,
                     quantity: 0
@@ -39,23 +41,16 @@ const MenuList = () => {
     const handleDecrement = (id) => {
         const updatedItems = orderItems
             .map(item =>
-                item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+                item.id === id ? { ...item, quantity: Math.max(0, item.quantity - 1) } : item
             )
             .filter(item => item.quantity > 0);
-
         setOrderItems(updatedItems);
     };
 
     const handleAddItem = (item) => {
         const existingItem = orderItems.find(orderItem => orderItem.id === item.id);
-
         if (existingItem) {
-            const updatedItems = orderItems.map(orderItem =>
-                orderItem.id === item.id
-                    ? { ...orderItem, quantity: orderItem.quantity + 1 }
-                    : orderItem
-            );
-            setOrderItems(updatedItems);
+            handleIncrement(item.id);
         } else {
             const newItem = {
                 id: item.id,
@@ -68,13 +63,36 @@ const MenuList = () => {
         }
     };
 
+    const handleRemoveItem = (item) => {
+        const existingItem = orderItems.find(orderItem => orderItem.id === item.id);
+        if (existingItem) {
+            handleDecrement(item.id);
+        }
+    };
+
+    const handleAmountPaidChange = (e) => {
+        const value = e.target.value;
+        if (value === '' || (!isNaN(value) && parseFloat(value) >= 0)) {
+            setAmountPaid(value);
+        }
+    };
+
     const subtotal = calculateSubtotal();
-    const discountAmount = subtotal * (discountPercent / 100);
+    const discountAmount = discountPercent ? subtotal * (discountPercent / 100) : 0;
     const total = subtotal - discountAmount;
+    const change = amountPaid ? (parseFloat(amountPaid)) - total : 0;
 
     const handleDiscountChange = (e) => {
-        const value = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-        setDiscountPercent(value);
+        const inputValue = e.target.value;
+        if (inputValue === '') {
+            setDiscountPercent(null);
+            return;
+        }
+        const numericValue = parseInt(inputValue, 10);
+        if (!isNaN(numericValue)) {
+            const clampedValue = Math.min(100, Math.max(0, numericValue));
+            setDiscountPercent(clampedValue);
+        }
     };
 
     return (
@@ -83,11 +101,7 @@ const MenuList = () => {
                 <div className="flex justify-between w-[85%]">
                     <p className="ml-5 font-bold text-[23px]">Categories</p>
                     <div className="relative w-[20%] h-[40px]">
-                        <img
-                            src={`src/assets/icons/search-icon.png`}
-                            alt="search icon"
-                            className="absolute left-3 top-1/2 transform -translate-y-1/2 h-[20px]"
-                        />
+                        <Search size={25} className="absolute top-2 left-2 text-primary" />
                         <input
                             type="text"
                             placeholder="Search..."
@@ -96,20 +110,24 @@ const MenuList = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-4 px-10 mt-4">
+                <div className="flex gap-2 px-10 mt-4">
                     <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Value Meal</button>
                     <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Beverages</button>
                     <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Desserts</button>
                     <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Others</button>
                 </div>
 
-                <div className="p-5 w-full grid-cols-5 overflow-y-auto">
-                    <MenuCard menu={menuItems} onAddItem={handleAddItem} />
+                <div className="p-5 pb-30 w-full grid-cols-5 overflow-y-auto">
+                    <MenuCard 
+                        menu={menuItems} 
+                        onAddItem={handleAddItem}
+                        onRemoveItem={handleRemoveItem}
+                    />
                 </div>
             </div>
 
             {orderItems.length > 0 && (
-                <div className="flex flex-col h-full w-[40%] p-3 bg-secondary rounded-l-lg shadow-md overflow-y-auto">
+                <div className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto">
                     <h2 className="text-xl font-bold mt-3 text-[#B82132]">Current Order</h2>
 
                     <div className="flex flex-col gap-4">
@@ -137,17 +155,16 @@ const MenuList = () => {
                         ))}
                     </div>
 
-                    <div className="mt-4 mb-5">
+                    <div className="mt-4 mb-3">
                         <label htmlFor="discount" className="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
                         <input
-                            type="number"
+                            type="text"
                             id="discount"
                             min="0"
                             max="100"
-                            value={discountPercent}
+                            value={discountPercent ?? ''}
                             onChange={handleDiscountChange}
                             className="w-full p-2 border border-gray-800 rounded cursor-pointer"
-                            placeholder="Enter discount percentage"
                         />
                     </div>
 
@@ -157,7 +174,7 @@ const MenuList = () => {
                             <span>₱{subtotal.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between mb-2">
-                            <span>Discount ({discountPercent}%)</span>
+                            <span>Discount ({discountPercent || 0}%)</span>
                             <span>-₱{discountAmount.toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg mt-2">
@@ -165,6 +182,38 @@ const MenuList = () => {
                             <span>₱{total.toFixed(2)}</span>
                         </div>
                     </div>
+
+                    <div className="mt-4 mb-3">
+                        <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                        <select
+                            id="paymentMethod"
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                            className="w-full p-2 border border-gray-800 rounded cursor-pointer"
+                        >
+                            <option value="Cash">Cash</option>
+                            <option value="GCash">GCash</option>
+                        </select>
+                    </div>
+
+                    <div className="mt-4 mb-3">
+                        <label htmlFor="amountPaid" className="block text-sm font-medium text-gray-700 mb-1">Amount Paid</label>
+                        <input
+                            type="text"
+                            id="amountPaid"
+                            min="0"
+                            value={amountPaid}
+                            onChange={handleAmountPaidChange}
+                            className="w-full p-2 border border-gray-800 rounded cursor-pointer"
+                        />
+                    </div>
+
+                    {amountPaid && (
+                        <div className="flex justify-between font-bold text-lg mt-2 mb-4">
+                            <span>Change</span>
+                            <span>₱{change.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                    )}
 
                     <button className="mt-2 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark cursor-pointer">
                         Proceed
