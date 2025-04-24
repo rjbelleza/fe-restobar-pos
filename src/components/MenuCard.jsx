@@ -1,12 +1,13 @@
 import { PlusIcon, MinusIcon } from "lucide-react";
 
 const MenuCard = ({ menu, onAddItem, onRemoveItem }) => {
+
   return (  
-    <div className="flex flex-wrap gap-6 justify-start">
+    <div className="grid grid-cols-5 gap-5">
       {menu.map((e) => (
         <div
           key={e.id}
-          className="flex flex-col justify-between h-[250px] w-[220px] p-4 rounded-lg bg-[#FFDE59] shadow-md hover:shadow-lg transition-shadow"
+          className="flex flex-col justify-between h-[250px] w-full p-4 rounded-lg bg-[#FFDE59] shadow-md hover:shadow-lg transition-shadow"
         >
           <img
             src={e.image}

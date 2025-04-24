@@ -96,9 +96,9 @@ const MenuList = () => {
     };
 
     return (
-        <div className="flex">
+        <div className="flex w-full">
             <div className="flex flex-col w-full">
-                <div className="flex justify-between w-[85%]">
+                <div className="flex justify-between w-full">
                     <p className="ml-5 font-bold text-[23px]">Categories</p>
                     <div className="relative w-[20%] h-[40px]">
                         <Search size={25} className="absolute top-2 left-2 text-primary" />
@@ -117,17 +117,21 @@ const MenuList = () => {
                     <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Others</button>
                 </div>
 
-                <div className="p-5 pb-30 w-full grid-cols-5 overflow-y-auto">
-                    <MenuCard 
-                        menu={menuItems} 
-                        onAddItem={handleAddItem}
-                        onRemoveItem={handleRemoveItem}
-                    />
+                <div className="w-full pb-30 px-10 py-10 overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
+                    {menuItems.length > 0 ? (
+                        <MenuCard 
+                            menu={menuItems} 
+                            onAddItem={handleAddItem}
+                            onRemoveItem={handleRemoveItem}
+                        />
+                    ) : (
+                        <p>No products available</p>
+                    )}
                 </div>
             </div>
 
             {orderItems.length > 0 && (
-                <div className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto">
+                <div className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
                     <h2 className="text-xl font-bold mt-3 text-[#B82132]">Current Order</h2>
 
                     <div className="flex flex-col gap-4">
