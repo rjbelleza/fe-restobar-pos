@@ -25,8 +25,28 @@
       "price": 120  
     },
     {
-      "id": 6,
+      "id": 7,
       "name": "Chicken Steak",
-      "price": 99  
+      "price": 39  
+    },
+    {
+      "id": 8,
+      "name": "Chicken Steak",
+      "price": 29  
+    },
+    {
+      "id": 9,
+      "name": "Chicken Steak",
+      "price": 19  
+    },
+    {
+      "id": 10,
+      "name": "Chicken Steak",
+      "price": 50  
+    },
+    {
+      "id": 11,
+      "name": "Chicken Steak",
+      "price": 100  
     }
 ]

@@ -2,22 +2,21 @@ import React from 'react';
 import Header from '../layouts/Header';
 import CashierSidemenu from '../layouts/CashierSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
-import Footer from '../layouts/Footer';
+import MenuList from '../components/MenuList';
 
 
 const CashierDashboard = () => {
 
   return (
-    <div className="h-screen w-screen flex flex-col gap-1 overflow-x-hidden">
+    <div className="h-full w-full flex flex-col gap-1 overflow-hidden">   
       <Header />
-      <div className="flex w-full h-full gap-3">
+      <div className="flex w-full h-full gap-3">    
         <CashierSidemenu />
-        <div className="flex flex-col gap-5 w-full h-fit pr-[10px] mt-2">
+        <div className="flex flex-col gap-5 w-full h-full pr-[10px] mt-2">
           <Breadcrumb />
-          <div className="flex justify-between h-full w-full gap-4">
-
+          <div className="flex justify-between w-full overflow-y-hidden">
+            <MenuList />
           </div>
-          <Footer />
         </div>
       </div>
     </div>
