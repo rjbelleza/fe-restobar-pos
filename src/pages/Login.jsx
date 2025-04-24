@@ -28,8 +28,8 @@ const Login = () => {
           // Redirect based on user role after successful login
           if (user?.role === "admin") {
               navigate('/admin-dashboard');
-          } else if (user?.role === "staff") {
-              navigate('/new-sales');
+          } else if (user?.role === "cashier") {
+              navigate('/cashier-dashboard');
           } else {
               navigate('/'); // Default redirect if role is unknown
           }

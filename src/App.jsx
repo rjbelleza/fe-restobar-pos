@@ -10,6 +10,8 @@ import Expenses from "./pages/Expenses";
 import SalesReport from "./pages/SalesReport";
 import ExpensesReport from "./pages/ExpensesReport";
 import UserList from "./pages/UsersList";
+import CashierDashboard from "./pages/CashierDashboard";
+import OrderHistory from "./pages/OrderHistory";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ element, role }) => {
@@ -35,16 +37,18 @@ const App = () => {
 
                 {/* Protected Admin Routes */}
                 <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} role="admin" />} />
-                <Route path="/product-list" element={<ProtectedRoute element={<ProductList />} role="admin" />} />
+                <Route path="/product-list" element={<ProtectedRoute element={<ProductList />} role={["admin", "cashier"]} />} />
                 <Route path="/sales" element={<ProtectedRoute element={<Sales />} role="admin" />} />
                 <Route path="/expenses" element={<ProtectedRoute element={<Expenses />} role="admin" />} />
                 <Route path="/sales-report" element={<ProtectedRoute element={<SalesReport />} role="admin" />} />
                 <Route path="/expenses-report" element={<ProtectedRoute element={<ExpensesReport />} role="admin" />} />
 
                 {/* Protected Staff Routes */}
-                <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="staff" />} />
-                <Route path="/inventory" element={<ProtectedRoute element={<Inventory />} role={["admin", "staff"]} />} />
-                <Route path="/users" element={<ProtectedRoute element={<UserList />} role={["admin", "staff"]} />} />
+                <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="cashier" />} />
+                <Route path="/inventory" element={<ProtectedRoute element={<Inventory />} role={["admin", "cashier"]} />} />
+                <Route path="/users" element={<ProtectedRoute element={<UserList />} role={["admin", "cashier"]} />} />
+                <Route path="/cashier-dashboard" element={<ProtectedRoute element={<CashierDashboard />} role={["cashier"]} />} />
+                <Route path="/order-history" element={<ProtectedRoute element={<OrderHistory />} role={["cashier"]} />} />
                 </Routes>
             </AuthProvider>
         </Router>

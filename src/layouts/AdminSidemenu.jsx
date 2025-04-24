@@ -48,7 +48,7 @@ const AdminSidemenu = () => {
                 <div className="flex flex-col items-center w-full">
                     <p className="text-[12px] w-full font-medium text-white">Profile</p>
                     <div className='border border-white w-full mb-3 mt-1'></div>
-                    <p className="text-center font-medium text-[19px] mb-2 text-white">{user.name}</p>
+                    <p className="text-center font-medium text-[19px] mb-2 text-white">{user.fname} {user.lname}</p>
                     <p className="text-center text-[14px] font-medium text-white">
                         {user.role.toUpperCase()}
                     </p>
