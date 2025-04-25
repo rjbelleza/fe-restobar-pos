@@ -1,6 +1,6 @@
 import MenuCard from "../components/MenuCard";
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
@@ -8,6 +8,7 @@ const MenuList = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [amountPaid, setAmountPaid] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const [proceedModal, setProceedModal] = useState(false);
 
     useEffect(() => {
         fetch('/data/mainDish.json')
@@ -95,6 +96,13 @@ const MenuList = () => {
         }
     };
 
+    const greetingTime = () => {
+        setProceedModal(true);
+        setTimeout(() => {
+            setProceedModal(false);
+        }, 2000);
+    };
+
     return (
         <div className="flex w-full">
             <div className="flex flex-col w-full">
@@ -139,7 +147,7 @@ const MenuList = () => {
                         {orderItems.map(item => (
                             <div key={`${item.id}-${item.quantity}`} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded" />
+                                    <img src={item.image} alt={item.name} className="h-[52px] w-[56px] rounded" />
                                     <div>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-sm font-semibold">₱{item.price.toFixed(2)}</p>
@@ -220,11 +228,25 @@ const MenuList = () => {
                         </div>
                     )}
 
-                    <button className="mt-2 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-dark cursor-pointer">
+                    <button
+                        onClick={greetingTime} 
+                        className="mt-2 py-3 bg-primary text-white font-bold rounded-lg hover:bg-mustard hover:text-black cursor-pointer">
                         Proceed
                     </button>
                 </div>
             )}
+
+            <div 
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} 
+                className={`fixed inset-0 flex items-center justify-center z-1000 transition-all duration-300 ${proceedModal ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
+            <div 
+                className={`w-fit bg-white px-10 py-10 rounded-sm shadow-lg transition-all duration-300 ${proceedModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+            >
+                <div className="text-center">
+                <p className="text-[25px] font-medium text-primary">"Thank you for choosing us!"</p>
+                </div>
+            </div>
+            </div>
         </div>
     );
 };
