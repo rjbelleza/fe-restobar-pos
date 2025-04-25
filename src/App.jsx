@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";  
 import { AuthProvider, useAuth } from "./contexts/AuthContexts";
 import StaffDashboard from "./pages/StaffDashboard";
@@ -37,7 +37,7 @@ const App = () => {
 
                 {/* Protected Admin Routes */}
                 <Route path="/admin-dashboard" element={<ProtectedRoute element={<AdminDashboard />} role="admin" />} />
-                <Route path="/product-list" element={<ProtectedRoute element={<ProductList />} role={["admin", "cashier"]} />} />
+                <Route path="/product-list" element={<ProtectedRoute element={<ProductList />} role="admin" />} />
                 <Route path="/sales" element={<ProtectedRoute element={<Sales />} role="admin" />} />
                 <Route path="/expenses" element={<ProtectedRoute element={<Expenses />} role="admin" />} />
                 <Route path="/sales-report" element={<ProtectedRoute element={<SalesReport />} role="admin" />} />

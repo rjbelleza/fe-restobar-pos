@@ -123,6 +123,7 @@ const MenuList = () => {
                             menu={menuItems} 
                             onAddItem={handleAddItem}
                             onRemoveItem={handleRemoveItem}
+                            trigger={orderItems}
                         />
                     ) : (
                         <p>No products available</p>

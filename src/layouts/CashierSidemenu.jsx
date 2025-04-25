@@ -64,13 +64,6 @@ const CashierSidemenu = () => {
                     > <LayoutDashboard />
                     </Link>
 
-                    <Link to="/product-list" 
-                        className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                                    hover:text-black transition-all ease-in-out text-[14px] font-medium
-                                    ${location.pathname == "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
-                    ><SquareChartGantt />
-                    </Link>
-
                     <Link to="/order-history" 
                         className={`flex justify-center items-center h-[40px] w-[50px] rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
                                     hover:text-black transition-all ease-in-out text-[14px] font-medium
@@ -101,16 +94,6 @@ const SideMenuBtn = () => {
             > 
                 <p className='flex justify-center items-center text-[14px] w-full h-full'>Dashboard</p>
                 <LayoutDashboard />
-            </Link>
-
-            <Link to="/product-list" 
-                className={`flex justify-between items-center px-5 h-[40px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
-                    hover:text-black transition-all ease-in-out text-[14px] font-medium
-                    ${location.pathname == "/product-list" ? 'bg-[#FFDE59]' : 'bg-secondary'}
-                    `}
-            > 
-                <p className='flex justify-center items-center text-[14px] w-full h-full'>Product List</p>
-                <SquareChartGantt />
             </Link>
 
             <Link to="/order-history" 

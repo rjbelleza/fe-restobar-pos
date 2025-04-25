@@ -1,9 +1,9 @@
 import { PlusIcon, MinusIcon } from "lucide-react";
 
-const MenuCard = ({ menu, onAddItem, onRemoveItem }) => {
+const MenuCard = ({ menu, onAddItem, onRemoveItem, trigger }) => {
 
   return (  
-    <div className="grid grid-cols-5 gap-5">
+    <div className={`grid ${trigger?.length > 0 ? 'grid-cols-4' : 'grid-cols-5'} gap-5`}>
       {menu.map((e) => (
         <div
           key={e.id}
