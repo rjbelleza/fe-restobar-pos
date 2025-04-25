@@ -7,29 +7,20 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X } from 'lucide-react';
+import { CirclePlus, Search, X, Eye } from 'lucide-react';
 
-const ExpensesTable = () => {
+const OrderHistoryTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [addExpense, setAddExpense] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newExpense, setNewExpense] = useState({ 
-    description: '', 
-    date: new Date().toISOString().split('T')[0], // Default to current date
-    time: new Date().toTimeString().substring(0, 5) // Default to current time (HH:MM)
-  });
+  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
   const [globalFilter, setGlobalFilter] = useState('');
 
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.description === selectedRow.description ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
+  const handleUpdateClick = (row) => {
+    setSelectedRow(row.original);
+    setShowUpdateModal(true);
   };
 
   const handleInputChange = (e) => {
@@ -37,28 +28,18 @@ const ExpensesTable = () => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewExpense(prev => ({ ...prev, [name]: value }));
+      setNewIngredient(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const currentDateTime = new Date();
-    const newEntry = {
-      description: newExpense.description,
-      dateTime: `${newExpense.date} ${newExpense.time || currentDateTime.toTimeString().substring(0, 5)}`,
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddExpense(false);   
-    setNewExpense({ 
-      description: '', 
-      date: currentDateTime.toISOString().split('T')[0],
-      time: currentDateTime.toTimeString().substring(0, 5)
-    });
+  const stockColorCode = (stock_quantity) => {
+    if (stock_quantity <= 25) return 'bg-red-500';
+    else if (stock_quantity <= 50) return 'bg-yellow-500';
+    else return 'bg-green-500';
   };
 
   useEffect(() => {
-    fetch('/data/expenses.json')
+    fetch('/data/orderHistory.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
@@ -73,10 +54,16 @@ const ExpensesTable = () => {
         accessorFn: (row, index) => index + 1,
         size: 50,
       },
+      { 
+        accessorKey: 'subTotal',
+        header: 'Subtotal',
+        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
+      },
       {
-        accessorKey: 'description',
-        header: 'Description',
-        cell: info => info.getValue(),
+        accessorKey: 'discount',
+        header: 'Discount',
+        cell: info => `${info.getValue()}%`,
         size: 190,
       },
       {
@@ -86,10 +73,41 @@ const ExpensesTable = () => {
         size: 190,
       },
       {
+        accessorKey: 'paymentMethod',
+        header: 'Payment Method',
+        cell: info => info.getValue(),
+        size: 190,
+      },
+      {
+        accessorKey: 'amountPaid',
+        header: 'Amount Paid',  
+        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
+      },
+      {
+        accessorKey: 'change',
+        header: 'Change',
+        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
+      },
+      {
         accessorKey: 'dateTime',
         header: 'Date & Time',
         cell: info => info.getValue(),
-        size: 160,
+        size: 190,
+      },
+      {
+        id: 'actions',
+        header: 'Action',
+        cell: ({ row }) => (
+          <button
+            onClick={() => handleUpdateClick(row)}
+            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+          >
+            <Eye size={20} />
+          </button>
+        ),
+        size: 20,
       },
     ],
     []
@@ -114,83 +132,42 @@ const ExpensesTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
-      <div className="flex items-center justify-end h-[35px] w-full mb-2">
-        <Search className="mr-[-30px] text-primary" />
-        <input
-          type="text"
-          placeholder="Search expense by description"
-          className="text-[13px] h-[35px] w-[230px] border border-black pl-9 pr-3 py-1 rounded-sm"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-        />
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddExpense(true)}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Expense
-          </button>
-        </div>
-      </div>
 
-      {/* Add Expense Modal */}
-      {addExpense && (
+      {/* View Modal */}
+      {showUpdateModal && selectedRow && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+          <div className="w-[500px] bg-white px-7 py-7  pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              ADD EXPENSE
+              ORDER DETAILS
               <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddExpense(false)} className="cursor-pointer">
+                <button onClick={() => setShowUpdateModal(false)} className="cursor-pointer">
                   <X size={20} />
                 </button>
               </span>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
-              <label className="text-[15px] mb-2">Description</label>
-              <input
-                type="text"
-                name="description"
-                value={newExpense.description}
-                onChange={handleInputChange}
-                className="w-full text-[17px] border border-gray-500 px-3 py-1 rounded-sm mb-7"
-                required
-              />
-              
-              <div className="flex gap-4 mb-7">
-                <div className="flex flex-col">
-                  <label className="text-[15px] mb-2">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={newExpense.date}
-                    onChange={handleInputChange}
-                    className="w-[150px] text-[17px] border border-gray-500 px-3 py-1 rounded-sm"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[15px] mb-2">Time</label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={newExpense.time}
-                    onChange={handleInputChange}
-                    className="w-[150px] text-[17px] border border-gray-500 px-3 py-1 rounded-sm"
-                  />
-                </div>
-              </div>
-              
-              <button
-                type="submit"
-                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-              >
-                ADD NEW EXPENSE
-              </button>
-            </form>
+            <table className='w-full border-collapse'>
+                <thead className='rounded-md'>
+                  <tr className='text-[13px] text-left rounded-md'>
+                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Product</th>
+                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Price (₱)</th>
+                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Quantity</th>
+                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Total Cost (₱)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedRow.products.map((products) => (
+                      <tr key={products.id} className='text-[13px]'>
+                        <td className='px-3 py-2 border-b border-gray-200'>{products.name}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{products.price.toFixed(2)}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{products.quantity}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{products.price * products.quantity}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
           </div>
         </div>
       )}
-
 
       {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
@@ -340,4 +317,4 @@ const ExpensesTable = () => {
   );
 };
 
-export default ExpensesTable;
+export default OrderHistoryTable;

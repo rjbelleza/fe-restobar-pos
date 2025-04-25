@@ -3,6 +3,7 @@ import Header from '../layouts/Header';
 import CashierSidemenu from '../layouts/CashierSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
 import Footer from '../layouts/Footer';
+import OrderHistoryTable from '../components/OrderHistoryTable';
 
 
 const OrderHistory = () => {
@@ -15,7 +16,7 @@ const OrderHistory = () => {
         <div className="flex flex-col gap-5 w-full h-fit pr-[10px] mt-2">
           <Breadcrumb />
           <div className="flex justify-between h-full w-full gap-4">
-
+            <OrderHistoryTable />
           </div>
           <Footer />
         </div>
