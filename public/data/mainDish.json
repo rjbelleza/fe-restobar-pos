@@ -2,51 +2,61 @@
     {
       "id": 1,
       "name": "Sizzling Pork Sisig",  
+      "image": "/images/sizzlingPork.jpg",
       "price": 79  
     },
     {
       "id": 2,
       "name": "Sizzling Pork Chop",
+      "image": "/images/sizzlingporkchop.png",
       "price": 79  
     },
     {
       "id": 3,
       "name": "Sizzling Fried Chicken",
+      "image": "/images/javarice-friedchicken.png",
       "price": 69  
     },
     {
       "id": 4,
-      "name": "Beef Pares",
+      "name": "Beef Steak",
+      "image": "/images/beefSteak.jpg",
       "price": 79  
     },
     {
-      "id": 5,
-      "name": "Beef Steak",
+      "id": 5,  
+      "name": "Lechon Kawali",
+      "image": "/images/lechonKawali.jpg",
       "price": 120  
     },
     {
       "id": 7,
-      "name": "Chicken Steak",
+      "name": "Adobong Manok",
+      "image": "/images/adobo.jpg",
       "price": 39  
     },
     {
       "id": 8,
-      "name": "Chicken Steak",
+      "name": "Chicharon Bulaklak", 
+      "image": "/images/chicharon.jpg",
       "price": 29  
     },
     {
       "id": 9,
       "name": "Chicken Steak",
-      "price": 19  
+      "image": "/images/chickensteak.jpg",
+      "price": 240  
     },
     {
       "id": 10,
-      "name": "Chicken Steak",
+      "name": "Crispy Calamares",
+      "image": "/images/crispy.jpg",
       "price": 50  
     },
     {
       "id": 11,
-      "name": "Chicken Steak",
-      "price": 100  
+      "name": "Sinuglaw",
+      "image": "/images/sinuglaw.jpg",
+      "price": 160  
     }
 ]
