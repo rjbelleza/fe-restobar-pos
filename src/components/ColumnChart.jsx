@@ -217,7 +217,7 @@ const ColumnChart = () => {
           options={options} 
           series={options.series} 
           type="bar" 
-          height={540} 
+          height={400} 
           width={980}
         />
       </div>

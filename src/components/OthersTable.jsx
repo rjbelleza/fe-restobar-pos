@@ -7,9 +7,9 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine } from 'lucide-react';
 
-const OthersTable = () => {
+const OthersTable = ({openSettingsModal, lowStock}) => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
@@ -55,7 +55,6 @@ const OthersTable = () => {
 
   const stockColorCode = (stock_quantity) => {
     if (stock_quantity <= 25) return 'bg-red-500';
-    else if (stock_quantity <= 50) return 'bg-yellow-500';
     else return 'bg-green-500';
   };
 
@@ -96,10 +95,10 @@ const OthersTable = () => {
         header: 'Action',
         cell: ({ row }) => (
           <button
-            onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Update
+              onClick={() => handleUpdateClick(row)}
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            >
+              <PencilLine size={15} />
           </button>
         ),
         size: 20,
@@ -128,21 +127,31 @@ const OthersTable = () => {
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
       <div className="flex items-center justify-end h-[35px] w-full mb-2">
-        <Search className="mr-[-30px] text-primary" />
-        <input
-          type="text"
-          placeholder="Search item by name"
-          className="text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm"
-          value={globalFilter}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-        />
-        <div className="flex justify-end ml-2">
+      <p className='mr-2 text-[15px] font-medium'>Legend:</p>
+        <p className='px-3 py-1 bg-green-500 rounded-sm text-[14px] font-medium mr-2'>High Stock</p>
+        <p className='px-3 py-1 bg-red-500 rounded-sm text-[14px] font-medium mr-5'>Low Stock</p>
+        <div className='relative'>
+          <Search className="text-primary absolute top-1 left-2" />
+          <input
+            type="text"
+            placeholder="Search ingredient by name"
+            className="text-[13px] h-[35px] w-[205px] border border-black pl-9 pr-3 py-1 rounded-sm"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end ml-2 gap-2">
           <button
             onClick={() => setAddItem(true)}
             className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
           >
             <CirclePlus />
             Add New Item  
+          </button>
+          <button 
+            onClick={() => openSettingsModal(true)}
+            className='bg-primary px-3 rounded-sm cursor-pointer hover:bg-mustard'>
+            <Settings className='text-white hover:text-black' />
           </button>
         </div>
       </div>

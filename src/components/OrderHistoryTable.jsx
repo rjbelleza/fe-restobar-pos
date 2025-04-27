@@ -73,6 +73,12 @@ const OrderHistoryTable = () => {
         size: 190,
       },
       {
+        accessorKey: 'orderType',
+        header: 'Order Type',
+        cell: info => info.getValue(),
+        size: 190,
+      },
+      {
         accessorKey: 'paymentMethod',
         header: 'Payment Method',
         cell: info => info.getValue(),

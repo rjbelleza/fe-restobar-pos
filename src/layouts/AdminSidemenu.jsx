@@ -203,6 +203,14 @@ const SideMenuBtn = () => {
                         >
                             <p className='flex justify-center items-center text-[12px] w-full h-full'>Expenses Report</p>
                         </Link>
+
+                        <Link to="/profit-report" 
+                            className={`flex justify-between items-center px-5 h-[35px] w-full rounded-lg cursor-pointer hover:bg-[#FFDE59] text-black
+                                    hover:text-black transition-all ease-in-out text-[12px] font-medium
+                                    ${location.pathname == "/profit-report" ? 'bg-[#FFDE59]' : 'bg-secondary'}`}
+                        >
+                            <p className='flex justify-center items-center text-[12px] w-full h-full'>Net Profit Report</p>
+                        </Link>
                     </div>
                 </div>
             </div>

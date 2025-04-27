@@ -6,62 +6,24 @@ import {
   getSortedRowModel,
   getPaginationRowModel,
   flexRender,
-} from '@tanstack/react-table';
-import { CirclePlus, Calendar, X } from 'lucide-react';
+} from '@tanstack/react-table'; 
+import { Calendar, X } from 'lucide-react';
 
-const ExpensesTable = () => {
+const ProfitReportTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [addExpense, setAddExpense] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
-  const [newExpense, setNewExpense] = useState({ 
-    description: '', 
-    date: new Date().toISOString().split('T')[0], // Default to current date
-    time: new Date().toTimeString().substring(0, 5) // Default to current time (HH:MM)
-  });
   const [globalFilter, setGlobalFilter] = useState('');
+  const [searchDate, setSearchDate] = useState('');
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5, // You can change the default page size here
+  });
   const [dateRangeModal, setDateRangeModal] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.description === selectedRow.description ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (showUpdateModal) {
-      setSelectedRow(prev => ({ ...prev, [name]: value }));
-    } else {
-      setNewExpense(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const currentDateTime = new Date();
-    const newEntry = {
-      description: newExpense.description,
-      dateTime: `${newExpense.date} ${newExpense.time || currentDateTime.toTimeString().substring(0, 5)}`,
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddExpense(false);   
-    setNewExpense({ 
-      description: '', 
-      date: currentDateTime.toISOString().split('T')[0],
-      time: currentDateTime.toTimeString().substring(0, 5)
-    });
-  };
-
   useEffect(() => {
-    fetch('/data/expenses.json')
+    fetch('/data/profitReport.json')
       .then(response => response.json())
       .then(jsonData => setData(jsonData))
       .catch(error => console.error('Error fetching data:', error));
@@ -70,45 +32,72 @@ const ExpensesTable = () => {
   const columns = useMemo(
     () => [
       {
-        id: 'rowNumber',
-        header: '#',
-        cell: ({ row }) => row.index + 1,
-        accessorFn: (row, index) => index + 1,
-        size: 50,
-      },
-      {
-        accessorKey: 'description',
-        header: 'Description',
+        accessorKey: 'date',
+        header: 'Date',
         cell: info => info.getValue(),
         size: 190,
       },
       {
-        accessorKey: 'totalAmount',
-        header: 'Total Amount',
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        size: 190,
+        accessorKey: 'sales',
+        header: 'Sales',
+        cell: info => "₱" + info.getValue().toFixed(2),
+        size: 160,
       },
       {
-        accessorKey: 'dateTime',
-        header: 'Date & Time',
-        cell: info => info.getValue(),
+        accessorKey: 'expenses',
+        header: 'Expenses',
+        cell: info => "₱" + info.getValue().toFixed(2),
+        size: 160,
+      },
+      {
+        id: 'net_profit',
+        header: 'Net Profit',
+        cell: info => "₱" + (info.row.original.sales - info.row.original.expenses).toFixed(2),
         size: 160,
       },
     ],
     []
   );
 
+  const filteredData = useMemo(() => {
+    if (!searchDate) return data;
+    
+    return data.filter(item => {
+      try {
+        const itemDate = new Date(item.date);
+        if (isNaN(itemDate.getTime())) return false;
+        const formattedItemDate = itemDate.toISOString().split('T')[0];
+        return formattedItemDate === searchDate;
+      } catch (e) {
+        console.warn('Invalid date format for item:', item);
+        return false;
+      }
+    });
+  }, [data, searchDate]);
+
+  const totalSalesAmount = useMemo(() => {
+    return filteredData.reduce((sum, item) => sum + (item.sales || 0), 0);
+  }, [filteredData]);
+
+  const totalExpensesAmount = useMemo(() => {
+    return filteredData.reduce((sum, item) => sum + (item.expenses || 0), 0);
+  }, [filteredData]);
+
+  const totalNetProfit = useMemo(() => {
+    return totalSalesAmount - totalExpensesAmount;
+  }, [totalSalesAmount, totalExpensesAmount]);
+
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     state: {
       sorting,
-      pagination,
       globalFilter,
+      pagination,
     },
     onSortingChange: setSorting,
-    onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -117,24 +106,20 @@ const ExpensesTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
-      <div className="flex items-center justify-end h-[35px] w-full mb-2">
-      <div className='flex items-center gap-2 h-[37px] ml-4'>
-          <button 
-            onClick={() => setDateRangeModal(true)}
-            className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-          >
-            <Calendar size={18} />
-            Select Date Range
-          </button>
+      <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
+        <div>
+          {startDate && endDate && (
+            <p>Profit from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+          )}
         </div>
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddExpense(true)}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Expense
-          </button>
+        <div className='flex items-center gap-2 h-[37px] ml-4'>
+            <button 
+              onClick={() => setDateRangeModal(true)}
+              className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+            >
+              <Calendar size={18} />
+              Select Date Range
+            </button>
         </div>
       </div>
 
@@ -192,64 +177,6 @@ const ExpensesTable = () => {
           </div>
         </div>
       )}
-
-      {/* Add Expense Modal */}
-      {addExpense && (
-        <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              ADD EXPENSE
-              <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddExpense(false)} className="cursor-pointer">
-                  <X size={20} />
-                </button>
-              </span>
-            </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
-              <label className="text-[15px] mb-2">Description</label>
-              <input
-                type="text"
-                name="description"
-                value={newExpense.description}
-                onChange={handleInputChange}
-                className="w-full text-[17px] border border-gray-500 px-3 py-1 rounded-sm mb-7"
-                required
-              />
-              
-              <div className="flex gap-4 mb-7">
-                <div className="flex flex-col">
-                  <label className="text-[15px] mb-2">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={newExpense.date}
-                    onChange={handleInputChange}
-                    className="w-[150px] text-[17px] border border-gray-500 px-3 py-1 rounded-sm"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-[15px] mb-2">Time</label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={newExpense.time}
-                    onChange={handleInputChange}
-                    className="w-[150px] text-[17px] border border-gray-500 px-3 py-1 rounded-sm"
-                  />
-                </div>
-              </div>
-              
-              <button
-                type="submit"
-                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-              >
-                ADD NEW EXPENSE
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
 
       {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
@@ -313,6 +240,23 @@ const ExpensesTable = () => {
                   className="px-4 py-6 text-center text-gray-500"
                 >
                   No records found
+                </td> 
+              </tr> 
+            )}
+            {/* Totals Row */}
+            {data.length > 0 && (
+              <tr className="font-semibold sticky bottom-0 bg-secondary">
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                  Totals
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                  ₱{totalSalesAmount.toFixed(2)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                  ₱{totalExpensesAmount.toFixed(2)}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                  ₱{totalNetProfit.toFixed(2)}
                 </td>
               </tr>
             )}
@@ -340,21 +284,24 @@ const ExpensesTable = () => {
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p className="text-sm text-gray-700">
-            Showing{' '}
-            <span className="font-medium">
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}
-            </span>{' '}
-            to{' '}
-            <span className="font-medium">
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                data.length
-              )}
-            </span>{' '}
-            of <span className="font-medium">{data.length}</span> results
+            {filteredData.length > 0 ? (
+              <>
+                Showing{' '}
+                <span className="font-medium">
+                  {pagination.pageIndex * pagination.pageSize + 1}
+                </span>{' '}
+                to{' '}
+                <span className="font-medium">
+                  {Math.min(
+                    (pagination.pageIndex + 1) * pagination.pageSize,
+                    filteredData.length
+                  )}
+                </span>{' '}
+                of <span className="font-medium">{filteredData.length}</span> results
+              </>
+            ) : (
+              'No records to show'
+            )}
           </p>
           <div>
             <nav
@@ -383,9 +330,7 @@ const ExpensesTable = () => {
                 Next
               </button>
               <button
-                onClick={() =>
-                  table.setPageIndex(table.getPageCount() - 1)
-                }
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
                 className="px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
               >
@@ -399,4 +344,4 @@ const ExpensesTable = () => {
   );
 };
 
-export default ExpensesTable;
+export default ProfitReportTable;

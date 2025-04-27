@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X } from 'lucide-react';
+import { CirclePlus, Search, X, PencilLine, Eye } from 'lucide-react';
 
 const Dessert = () => {
   const [data, setData] = useState([]);
@@ -96,12 +96,26 @@ const Dessert = () => {
       id: 'actions',
       header: 'Action',
       cell: ({ row }) => (
-        <button
-          onClick={() => handleUpdateClick({ ...row, index: row.index })}
-          className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-        >
-          Update
-        </button>
+        <div className='space-x-2'>
+            <button
+
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            >
+              <Eye size={15} />
+            </button>
+            <button
+              onClick={() => handleUpdateClick(row)}
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            >
+              <PencilLine size={15} />
+            </button>
+            <button
+            
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            >
+              <X size={15} />
+            </button>
+          </div>
       ),
       size: 20,
     },

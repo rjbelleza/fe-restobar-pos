@@ -12,6 +12,7 @@ import ExpensesReport from "./pages/ExpensesReport";
 import UserList from "./pages/UsersList";
 import CashierDashboard from "./pages/CashierDashboard";
 import OrderHistory from "./pages/OrderHistory";
+import ProfitReport from "./pages/ProfitReport";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ element, role }) => {
@@ -42,6 +43,7 @@ const App = () => {
                 <Route path="/expenses" element={<ProtectedRoute element={<Expenses />} role="admin" />} />
                 <Route path="/sales-report" element={<ProtectedRoute element={<SalesReport />} role="admin" />} />
                 <Route path="/expenses-report" element={<ProtectedRoute element={<ExpensesReport />} role="admin" />} />
+                <Route path="/profit-report" element={<ProtectedRoute element={<ProfitReport />} role="admin" />} />
 
                 {/* Protected Staff Routes */}
                 <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="cashier" />} />

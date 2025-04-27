@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X } from 'lucide-react';
+import { CirclePlus, Search, X, PencilLine, Trash } from 'lucide-react';
 
 const UsersListTable = () => {
   const [data, setData] = useState([]);
@@ -24,6 +24,7 @@ const UsersListTable = () => {
   });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addUser, setAddUser] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
 
   useEffect(() => {
     fetch('/data/usersList.json')
@@ -126,14 +127,15 @@ const UsersListTable = () => {
         <div className='flex w-full gap-2'>
           <button
               onClick={() => handleUpdateClick(row)}
-              className="text-white w-[60px] bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-3 py-2"
             >
-              Edit
-            </button>
-            <button
-            className="text-white w-[60px] bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-          >
-            Delete
+              <PencilLine size={15} />
+          </button>
+          <button
+              onClick={() => setDeleteModal(true)}
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-3 py-2"
+            >
+              <Trash size={15} />
           </button>
         </div>
       ),
@@ -181,6 +183,29 @@ const UsersListTable = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+          <div className="bg-white p-7 rounded-sm shadow-lg w-[300px]">
+            <div className='flex justify-center w-full'>
+              <p>Are you sure to delete this user?</p>
+            </div>
+            <div className='flex justify-end gap-2 w-full mt-5'>
+              <button 
+                onClick={() => setDeleteModal(false)}
+                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+                Yes
+              </button>
+              <button 
+                  onClick={() => setDeleteModal(false)}
+                  className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Modal */}
       {addUser && (

@@ -12,6 +12,7 @@
         "subTotal": 158,
         "discount": "0",
         "totalAmount": 158,
+        "orderType": "Dine-in",
         "paymentMethod": "Cash",
         "amountPaid": 500,
         "change": 342,
@@ -33,9 +34,10 @@
                             "price": 79
                         }
                     ],
-        "subTotal": 158,
+        "subTotal": 300.2,
         "discount": 5,
         "totalAmount": 150,
+        "orderType": "Take-out",
         "paymentMethod": "Cash",
         "amountPaid": 500,
         "change": 342,
@@ -63,9 +65,10 @@
                             "price": 79
                         }
                     ],
-        "subTotal": 158,
+        "subTotal": 474,
         "discount": "0",
         "totalAmount": 158,
+        "orderType": "Dine-in",
         "paymentMethod": "Cash",
         "amountPaid": 500,
         "change": 342,

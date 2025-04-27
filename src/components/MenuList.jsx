@@ -8,6 +8,7 @@ const MenuList = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [amountPaid, setAmountPaid] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('Cash');
+    const [orderType, setOrderType] = useState('Dine-in');
     const [proceedModal, setProceedModal] = useState(false);
 
     useEffect(() => {
@@ -197,6 +198,19 @@ const MenuList = () => {
                     </div>
 
                     <div className="mt-4 mb-3">
+                        <label htmlFor="orderType" className="block text-sm font-medium text-gray-700 mb-1">Order Type</label>
+                        <select
+                            id="orderType"
+                            value={orderType}
+                            onChange={(e) => setOrderType(e.target.value)}
+                            className="w-full p-2 border border-gray-800 rounded cursor-pointer"
+                        >
+                            <option value="Dine-in">Dine-in</option>
+                            <option value="Take-out">Take-out</option>
+                        </select>
+                    </div>
+
+                    <div className="mt-4 mb-3">
                         <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                         <select
                             id="paymentMethod"
@@ -239,13 +253,13 @@ const MenuList = () => {
             <div 
                 style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} 
                 className={`fixed inset-0 flex items-center justify-center z-1000 transition-all duration-300 ${proceedModal ? 'opacity-100 visible' : 'opacity-0 invisible'}`}>
-            <div 
-                className={`w-fit bg-white px-10 py-10 rounded-sm shadow-lg transition-all duration-300 ${proceedModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
-            >
-                <div className="text-center">
-                <p className="text-[25px] font-medium text-primary">"Thank you for choosing us!"</p>
+                <div 
+                    className={`w-fit bg-white px-10 py-10 rounded-sm shadow-lg transition-all duration-300 ${proceedModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
+                >
+                    <div className="text-center">
+                        <p className="text-[25px] font-medium text-primary">"Thank you for choosing us!"</p>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
     );
