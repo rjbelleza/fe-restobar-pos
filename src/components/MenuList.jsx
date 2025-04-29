@@ -10,6 +10,7 @@ const MenuList = () => {
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [orderType, setOrderType] = useState('Dine-in');
     const [proceedModal, setProceedModal] = useState(false);
+    const [focus, setFocus] = useState('value-meal');
 
     useEffect(() => {
         fetch('/data/mainDish.json')
@@ -97,8 +98,10 @@ const MenuList = () => {
         }
     };
 
-    const greetingTime = () => {
+    const greetingTime = (e) => {
+        e.preventDefault();
         setProceedModal(true);
+        setOrderItems([]);
         setTimeout(() => {
             setProceedModal(false);
         }, 2000);
@@ -120,10 +123,26 @@ const MenuList = () => {
                 </div>
 
                 <div className="flex gap-2 px-10 mt-4">
-                    <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Value Meal</button>
-                    <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Beverages</button>
-                    <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Desserts</button>
-                    <button className="px-4 py-2 bg-secondary text-primary border rounded-lg hover:bg-primary hover:text-white cursor-pointer focus:bg-primary focus:text-white">Others</button>
+                    <button 
+                        onClick={() => setFocus('value-meal')}
+                        className={`px-4 py-2 ${focus === 'value-meal' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                    >Value Meal
+                    </button>
+                    <button 
+                        onClick={() => setFocus('beverages')}
+                        className={`px-4 py-2 ${focus === 'beverages' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                    >Beverages
+                    </button>
+                    <button 
+                        onClick={() => setFocus('desserts')}
+                        className={`px-4 py-2 ${focus === 'desserts' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                    >Desserts
+                    </button>
+                    <button 
+                        onClick={() => setFocus('others')}
+                        className={`px-4 py-2 ${focus === 'others' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                    >Others
+                    </button>
                 </div>
 
                 <div className="w-full pb-30 px-10 py-10 overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
@@ -141,7 +160,9 @@ const MenuList = () => {
             </div>
 
             {orderItems.length > 0 && (
-                <div className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
+                <form
+                    onSubmit={greetingTime} 
+                    className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
                     <h2 className="text-xl font-bold mt-3 text-[#B82132]">Current Order</h2>
 
                     <div className="flex flex-col gap-4">
@@ -243,11 +264,12 @@ const MenuList = () => {
                     )}
 
                     <button
-                        onClick={greetingTime} 
-                        className="mt-2 py-3 bg-primary text-white font-bold rounded-lg hover:bg-mustard hover:text-black cursor-pointer">
+                        type="submit"
+                        disabled={amountPaid < total}
+                        className={`mt-2 py-3 ${amountPaid < total ? 'bg-gray-300' : 'bg-primary hover:bg-mustard hover:text-black'} text-white font-bold rounded-lg cursor-pointer`}>
                         Proceed
                     </button>
-                </div>
+                </form>
             )}
 
             <div 
