@@ -117,24 +117,31 @@ const ExpensesTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
-      <div className="flex items-center justify-end h-[35px] w-full mb-2">
-      <div className='flex items-center gap-2 h-[37px] ml-4'>
-          <button 
-            onClick={() => setDateRangeModal(true)}
-            className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-          >
-            <Calendar size={18} />
-            Select Date Range
-          </button>
+      <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
+        <div>
+          {startDate && endDate && (
+            <p>Sales from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+          )}
         </div>
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddExpense(true)}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Expense
-          </button>
+        <div className='flex'>
+          <div className='flex items-center gap-2 h-[37px] ml-4'>
+            <button 
+              onClick={() => setDateRangeModal(true)}
+              className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+            >
+              <Calendar size={18} />
+              Select Date Range
+            </button>
+          </div>
+          <div className="flex justify-end ml-2">
+            <button
+              onClick={() => setAddExpense(true)}
+              className="flex items-center gap-2 h-[37px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+            >
+              <CirclePlus />
+              Add New Expense
+            </button>
+          </div>
         </div>
       </div>
 
