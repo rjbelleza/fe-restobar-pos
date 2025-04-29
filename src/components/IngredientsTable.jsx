@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Settings, PencilLine, Eye } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine, Eye, Trash } from 'lucide-react';
 import api from '../api/axios';
 
 const IngredientsTable = ({openSettingsModal, lowStock}) => {
@@ -18,6 +18,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [addIngredients, setAddIngredients] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [newIngredient, setNewIngredient] = useState({ name: '', stock: '', category: 'ingredients' });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [globalFilter, setGlobalFilter] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,23 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
+  };
+
+  const handleDeleteClick = (row) => {
+    setSelectedRow(row.original);
+    setShowDeleteModal(true);
+  };
+
+  const deleteIngredient = async () => {
+    try {
+      const response = await api.patch(`/ingredient/delete/${selectedRow.id}`);
+      setMessage(response.data.message);
+      setKeyTrigger(prev => prev + 1);
+      setShowDeleteModal(false);
+    } catch (error) {
+      setMessage(error.response.data.message);
+      setShowDeleteModal(false);
+    }
   };
 
   const handleUpdateSubmit = (e) => {
@@ -108,12 +126,20 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
+          <div className='flex gap-2'>
             <button
               onClick={() => handleUpdateClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <PencilLine size={15} />
             </button>
+            <button
+              onClick={() => handleDeleteClick(row)}
+              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            >
+              <Trash size={15} />
+            </button>
+          </div>
         ),
         size: 20,
       },
@@ -211,6 +237,28 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
             </form>
           </div>
         </div>
+      )}
+
+      {showDeleteModal && selectedRow && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+        <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
+          <div className='flex justify-center w-full'>
+            <p>Are you sure to delete this ingredient?</p>
+          </div>
+          <div className='flex justify-end gap-2 w-full mt-5'>
+            <button 
+              onClick={deleteIngredient}
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              Yes
+            </button>
+            <button 
+                onClick={() => setShowDeleteModal(false)}
+                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              No
+            </button>
+          </div>
+        </div>
+      </div>
       )}
 
       {/* (Update modal remains unchanged) */}
