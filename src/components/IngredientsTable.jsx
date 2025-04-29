@@ -8,6 +8,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { CirclePlus, Search, X, Settings, PencilLine, Eye } from 'lucide-react';
+import api from '../api/axios';
 
 const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [data, setData] = useState([]);
@@ -16,8 +17,11 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addIngredients, setAddIngredients] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
+  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '', category: 'ingredients' });
   const [globalFilter, setGlobalFilter] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [keyTrigger, setKeyTrigger] = useState(0);
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -42,15 +46,17 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddIngredients = async (e) => {
     e.preventDefault();
-    const newEntry = {
-      name: newIngredient.name,
-      stock: Number(newIngredient.stock),
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddIngredients(false);
-    setNewIngredient({ name: '', stock: '' });
+    try {
+      const response = await api.post('/ingredient', newIngredient);
+      setMessage(response.data.message);
+      setAddIngredients(false);
+      setKeyTrigger(prev => prev + 1);
+      setNewIngredient({ name: '', stock: '', category: 'ingredients' });
+    } catch (error) {
+      setMessage(error.response.data.message);
+    }
   };
 
   const stockColorCode = (stock_quantity) => {
@@ -58,12 +64,20 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     else return 'bg-green-500';
   };
 
+  const fetchIngredients = async () => {
+    try {
+      const response = await api.get('/ingredients');
+      setData(response.data.data);
+      setLoading(false);
+    } catch (error) {
+      setMessage(error.response.data.message);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/data/ingredients.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    fetchIngredients();
+  }, [keyTrigger]);
 
   const columns = useMemo(
     () => [
@@ -168,7 +182,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
                 </button>
               </span>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+            <form className="flex flex-col" onSubmit={handleAddIngredients}>
               <label className="text-[15px] mb-2">Ingredient Name</label>
               <input
                 type="text"
@@ -301,7 +315,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? 'Fetching ingredients...' : 'No ingredients available'}
                 </td>
               </tr>
             )}
