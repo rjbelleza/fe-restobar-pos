@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
 import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
 
 const BeverageTable = ({openSettingsModal}) => {
   const [data, setData] = useState([]);
@@ -23,7 +24,9 @@ const BeverageTable = ({openSettingsModal}) => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -39,10 +42,14 @@ const BeverageTable = ({openSettingsModal}) => {
     try {
       const response = await api.patch(`/beverage/delete/${selectedRow.id}`);
       setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
       setShowDeleteModal(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
       setShowDeleteModal(false);
     }
   };
@@ -70,11 +77,15 @@ const BeverageTable = ({openSettingsModal}) => {
     try {
       const response = await api.post('/beverage', newBeverage);
       setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
       setAddBeverage(false);
       setKeyTrigger(prev => prev + 1);
-      setNewBeverage({ name: '', stock: '' });
+      setNewBeverage({ name: '', stock: '' , category: 'beverages'});
     } catch (error) {
       setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
     }
   };
 
@@ -90,6 +101,8 @@ const BeverageTable = ({openSettingsModal}) => {
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
       setLoading(false);
     }
   };
@@ -167,6 +180,15 @@ const BeverageTable = ({openSettingsModal}) => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
+
+    {showSnackbar && (
+      <Snackbar 
+        message={message && message}
+        type={responseStatus}
+        onClose={() => setShowSnackbar(false)}
+      />
+    )}
+
       <div className="flex items-center justify-end h-[35px] w-full mb-2">
       <p className='mr-2 text-[15px] font-medium'>Legend:</p>
         <p className='px-3 py-1 bg-green-500 rounded-sm text-[14px] font-medium mr-2'>High Stock</p>
