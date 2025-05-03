@@ -7,21 +7,44 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Settings, PencilLine } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
+import api from '../api/axios';
 
-const BeverageTable = ({openSettingsModal, lowStock}) => {
+const BeverageTable = ({openSettingsModal}) => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addBeverage, setAddBeverage] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newBeverage, setNewBeverage] = useState({ name: '', stock: '' });
+  const [newBeverage, setNewBeverage] = useState({ name: '', stock: '', category: 'beverages' });
   const [globalFilter, setGlobalFilter] = useState('');
+  const [keyTrigger, setKeyTrigger] = useState(0);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
+  };
+
+  const handleDeleteClick = (row) => {
+    setSelectedRow(row.original);
+    setShowDeleteModal(true);
+  };
+
+  const deleteBeverage = async () => {
+    try {
+      const response = await api.patch(`/beverage/delete/${selectedRow.id}`);
+      setMessage(response.data?.message);
+      setKeyTrigger(prev => prev + 1);
+      setShowDeleteModal(false);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setShowDeleteModal(false);
+    }
   };
 
   const handleUpdateSubmit = (e) => {
@@ -42,15 +65,17 @@ const BeverageTable = ({openSettingsModal, lowStock}) => {
     }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const newEntry = {
-      name: newBeverage.name,
-      stock: Number(newBeverage.stock),
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddBeverage(false);
-    setNewBeverage({ name: '', stock: '' });
+    try {
+      const response = await api.post('/beverage', newBeverage);
+      setMessage(response.data?.message);
+      setAddBeverage(false);
+      setKeyTrigger(prev => prev + 1);
+      setNewBeverage({ name: '', stock: '' });
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+    }
   };
 
   const stockColorCode = (stock_quantity) => {
@@ -58,12 +83,20 @@ const BeverageTable = ({openSettingsModal, lowStock}) => {
     else return 'bg-green-500';
   };
 
+  const fetchBeverage = async () => {
+    try {
+      const response = await api.get('/beverages');
+      setData(response.data?.data);
+      setLoading(false);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/data/beverage.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    fetchBeverage();
+  }, [keyTrigger]);
 
   const columns = useMemo(
     () => [
@@ -94,12 +127,20 @@ const BeverageTable = ({openSettingsModal, lowStock}) => {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
-          <button
-              onClick={() => handleUpdateClick(row)}
+          <div className='flex gap-2'>
+            <button
+                onClick={() => handleUpdateClick(row)}
+                className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+              >
+                <PencilLine size={15} />
+            </button>
+            <button
+              onClick={() => handleDeleteClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
-              <PencilLine size={15} />
-          </button>
+              <Trash size={15} />
+            </button>
+          </div>
         ),
         size: 20,
       },
@@ -155,6 +196,28 @@ const BeverageTable = ({openSettingsModal, lowStock}) => {
           </button>
         </div>
       </div>
+
+      {showDeleteModal && selectedRow && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+        <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
+          <div className='flex justify-center w-full'>
+            <p>Are you sure to delete this beverage?</p>
+          </div>
+          <div className='flex justify-end gap-2 w-full mt-5'>
+            <button
+              onClick={deleteBeverage} 
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              Yes
+            </button>
+            <button 
+                onClick={() => setShowDeleteModal(false)}
+                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
 
       {/* Add Beverage Modal */}
       {addBeverage && (
@@ -296,7 +359,7 @@ const BeverageTable = ({openSettingsModal, lowStock}) => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  No records found
+                  {loading ? 'Fetching beverages...' : 'No records found'}
                 </td>
               </tr>
             )}

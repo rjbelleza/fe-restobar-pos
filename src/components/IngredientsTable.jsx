@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { CirclePlus, Search, X, Settings, PencilLine, Eye, Trash } from 'lucide-react';
 import api from '../api/axios';
+import Snackbar from './Snackbar';
 
 const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [data, setData] = useState([]);
@@ -23,6 +24,8 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [keyTrigger, setKeyTrigger] = useState(0);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -38,10 +41,14 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     try {
       const response = await api.patch(`/ingredient/delete/${selectedRow.id}`);
       setMessage(response.data.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
       setShowDeleteModal(false);
     } catch (error) {
-      setMessage(error.response.data.message);
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
       setShowDeleteModal(false);
     }
   };
@@ -68,12 +75,16 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     e.preventDefault();
     try {
       const response = await api.post('/ingredient', newIngredient);
-      setMessage(response.data.message);
+      setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
       setAddIngredients(false);
       setKeyTrigger(prev => prev + 1);
       setNewIngredient({ name: '', stock: '', category: 'ingredients' });
     } catch (error) {
-      setMessage(error.response.data.message);
+      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.data?.message);
+      setShowSnackbar(true)
     }
   };
 
@@ -85,10 +96,12 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const fetchIngredients = async () => {
     try {
       const response = await api.get('/ingredients');
-      setData(response.data.data);
+      setData(response.data?.data);
       setLoading(false);
     } catch (error) {
-      setMessage(error.response.data.message);
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
       setLoading(false);
     }
   };
@@ -166,6 +179,15 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
+
+    {showSnackbar && (
+      <Snackbar 
+        message={message && message}
+        type={responseStatus}
+        onClose={() => setShowSnackbar(false)}
+      />
+    )}
+
       <div className="flex items-center justify-end h-[35px] w-full mb-2">
         <p className='mr-2 text-[15px] font-medium'>Legend:</p>
         <p className='px-3 py-1 bg-green-500 rounded-sm text-[14px] font-medium mr-2'>High Stock</p>
