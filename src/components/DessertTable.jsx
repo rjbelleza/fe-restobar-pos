@@ -7,21 +7,37 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Settings, PencilLine } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
 
-const DessertTable = ({openSettingsModal, lowStock}) => {
+const DessertTable = ({openSettingsModal}) => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addDessert, setAddDessert] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newDessert, setNewDessert] = useState({ name: '', stock: '' });
+  const [newDessert, setNewDessert] = useState({ name: '', stock: '', category: 'desserts' });
   const [globalFilter, setGlobalFilter] = useState('');
+  const [keyTrigger, setKeyTrigger] = useState(0);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [status, setStatus] = useState('');
+
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
+  };
+
+  const handleDeleteClick = (row) => {
+    setSelectedRow(row.original);
+    setShowDeleteModal(true);
   };
 
   const handleUpdateSubmit = (e) => {
@@ -33,6 +49,22 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
     setShowUpdateModal(false);
   };
 
+  const deleteDessert = async () => {
+    try {
+      const response = await api.patch(`/dessert/delete/${selectedRow.id}`);
+      setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
+      setKeyTrigger(prev => prev + 1);
+      setShowDeleteModal(false);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
+      setShowDeleteModal(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (showUpdateModal) {
@@ -42,15 +74,21 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
     }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const newEntry = {
-      name: newDessert.name,
-      stock: Number(newDessert.stock),
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddDessert(false);
-    setNewDessert({ name: '', stock: '' });
+    try {
+      const response = await api.post('/dessert', newDessert);
+      setFeedback(response.data?.message);
+      setStatus(response.data?.status);
+      setShowSnackbar(true);
+      setAddDessert(false);
+      setKeyTrigger(prev => prev + 1);
+      setNewBeverage({ name: '', stock: '' , category: 'desserts'});
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
+    }
   };
 
   const stockColorCode = (stock_quantity) => {
@@ -58,12 +96,22 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
     else return 'bg-green-500';
   };
 
+  const fetchDesserts = async () => {
+    try {
+      const response = await api.get('/desserts');
+      setData(response.data?.data);
+      setLoading(false);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/data/beverage.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    fetchDesserts();
+  }, [keyTrigger]);
 
   const columns = useMemo(
     () => [
@@ -94,12 +142,20 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
         id: 'actions',
         header: 'Action',
         cell: ({ row }) => (
-          <button
-              onClick={() => handleUpdateClick(row)}
+          <div className='flex gap-2'>
+            <button
+                onClick={() => handleUpdateClick(row)}
+                className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+              >
+                <PencilLine size={15} />
+            </button>
+            <button
+              onClick={() => handleDeleteClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
-              <PencilLine size={15} />
-          </button>
+              <Trash size={15} />
+            </button>
+          </div>
         ),
         size: 20,
       },
@@ -126,6 +182,15 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
+
+    {showSnackbar && (
+      <Snackbar 
+        message={message ? message : feedback && feedback}
+        type={responseStatus ? responseStatus : status && status}
+        onClose={() => setShowSnackbar(false)}
+      />
+    )}
+
       <div className="flex items-center justify-end h-[35px] w-full mb-2">
       <p className='mr-2 text-[15px] font-medium'>Legend:</p>
         <p className='px-3 py-1 bg-green-500 rounded-sm text-[14px] font-medium mr-2'>High Stock</p>
@@ -155,6 +220,28 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
           </button>
         </div>
       </div>
+
+      {showDeleteModal && selectedRow && (
+        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+        <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
+          <div className='flex justify-center w-full'>
+            <p>Are you sure to delete this beverage?</p>
+          </div>
+          <div className='flex justify-end gap-2 w-full mt-5'>
+            <button
+              onClick={deleteDessert} 
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              Yes
+            </button>
+            <button 
+                onClick={() => setShowDeleteModal(false)}
+                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+      )}
 
       {/* Add Dessert Modal */}
       {addDessert && (
@@ -255,7 +342,7 @@ const DessertTable = ({openSettingsModal, lowStock}) => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  No records found
+                  {loading ? 'Fetching desserts...': 'No desserts available'}
                 </td>
               </tr>
             )}

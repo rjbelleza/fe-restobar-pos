@@ -381,7 +381,7 @@ const BeverageTable = ({openSettingsModal}) => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  {loading ? 'Fetching beverages...' : 'No records found'}
+                  {loading ? 'Fetching beverages...' : 'No beverages available'}
                 </td>
               </tr>
             )}
