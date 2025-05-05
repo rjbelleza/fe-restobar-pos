@@ -27,6 +27,49 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
 
+  const [updateIngredient, setUpdateIngredient] = useState({
+    name: '',
+    stock: 0,
+  });
+
+  useEffect(() => {
+    if (selectedRow) {
+      setUpdateIngredient({
+        name: selectedRow.name || '',
+        stock: selectedRow.stock || 0,
+      });
+    }
+  }, [selectedRow]);
+
+  const handleUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateIngredient(prev => ({
+      ...prev, 
+      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+    }));
+  };
+
+  const handleSaveUpdate = async (e) => {
+    e.preventDefault();    
+    try {
+        if (!selectedRow || !selectedRow.id) {
+            return;
+        }
+
+        const response = await api.put(`/ingredient/update/${selectedRow.id}`, updateIngredient);
+        setMessage(response.data?.message);
+        setResponseStatus(response.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+        setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+        setMessage(error.response?.data?.message);
+        setResponseStatus(error.response?.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+    }
+  };
+
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
@@ -51,15 +94,6 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
       setShowSnackbar(true);
       setShowDeleteModal(false);
     }
-  };
-
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
   };
 
   const handleInputChange = (e) => {
@@ -283,7 +317,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
       </div>
       )}
 
-      {/* (Update modal remains unchanged) */}
+      {/* Update Modal */}
       {showUpdateModal && selectedRow && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
@@ -295,21 +329,21 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
                 </button>
               </span>
             </p>
-            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+            <form className="flex flex-col" onSubmit={handleSaveUpdate}>
               <label className="text-[15px] mb-2">Product Name</label>
               <input
                 type="text"
                 name="name"
-                value={selectedRow.name || ''}
-                onChange={handleInputChange}
+                value={updateIngredient.name}
+                onChange={handleUpdateChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
                 type="number"
                 name="stock"
-                value={selectedRow.stock || ''}
-                onChange={handleInputChange}
+                value={updateIngredient.stock}
+                onChange={handleUpdateChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
               />

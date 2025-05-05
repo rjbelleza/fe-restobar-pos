@@ -27,6 +27,48 @@ const BeverageTable = ({openSettingsModal}) => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
 
+  const [updateBeverage, setUpdateBeverage] = useState({
+    name: '',
+    stock: 0,
+  });
+
+  useEffect(() => {
+    if (selectedRow) {
+      setUpdateBeverage({
+        name: selectedRow.name || '',
+        stock: selectedRow.stock || 0,
+      });
+    }
+  }, [selectedRow]);
+
+  const handleUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateBeverage(prev => ({
+      ...prev, 
+      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+    }));
+  };
+
+  const handleSaveUpdate = async (e) => {
+    e.preventDefault();    
+    try {
+        if (!selectedRow || !selectedRow.id) {
+            return;
+        }
+
+        const response = await api.put(`/beverage/update/${selectedRow.id}`, updateBeverage);
+        setMessage(response.data?.message);
+        setResponseStatus(response.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+        setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+        setMessage(error.response?.data?.message);
+        setResponseStatus(error.response?.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+    }
+  };
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -296,21 +338,21 @@ const BeverageTable = ({openSettingsModal}) => {
                 </button>
               </span>
             </p>
-            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+            <form className="flex flex-col" onSubmit={handleSaveUpdate}>
               <label className="text-[15px] mb-2">Product Name</label>
               <input
                 type="text"
                 name="name"
-                value={selectedRow.name || ''}
-                onChange={handleInputChange}
+                value={updateBeverage.name}
+                onChange={handleUpdateChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
                 type="number"
                 name="stock"
-                value={selectedRow.stock || ''}
-                onChange={handleInputChange}
+                value={updateBeverage.stock}
+                onChange={handleUpdateChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
               />

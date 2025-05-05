@@ -29,6 +29,49 @@ const DessertTable = ({openSettingsModal}) => {
   const [feedback, setFeedback] = useState('');
   const [status, setStatus] = useState('');
 
+  const [updateDessert, setUpdateDessert] = useState({
+    name: '',
+    stock: 0,
+  });
+
+  useEffect(() => {
+    if (selectedRow) {
+      setUpdateDessert({
+        name: selectedRow.name || '',
+        stock: selectedRow.stock || 0,
+      });
+    }
+  }, [selectedRow]);
+
+  const handleUpdateChange = (e) => {
+    const { name, value } = e.target;
+    setUpdateDessert(prev => ({
+      ...prev, 
+      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+    }));
+  };
+
+  const handleSaveUpdate = async (e) => {
+    e.preventDefault();    
+    try {
+        if (!selectedRow || !selectedRow.id) {
+            return;
+        }
+
+        const response = await api.put(`/dessert/update/${selectedRow.id}`, updateDessert);
+        setMessage(response.data?.message);
+        setResponseStatus(response.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+        setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+        setMessage(error.response?.data?.message);
+        setResponseStatus(error.response?.data?.status);
+        setShowUpdateModal(false);
+        setShowSnackbar(true);
+    }
+  };
+
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -280,6 +323,47 @@ const DessertTable = ({openSettingsModal}) => {
                 className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
               >
                 ADD NEW DESSERT
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+            {/* (Update modal remains unchanged) */}
+            {showUpdateModal && selectedRow && (
+        <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              UPDATE DESSERT
+              <span className="text-gray-800 hover:text-gray-600 font-normal">
+                <button onClick={() => setShowUpdateModal(false)} className="cursor-pointer">
+                  <X size={20} />
+                </button>
+              </span>
+            </p>
+            <form className="flex flex-col" onSubmit={handleSaveUpdate}>
+              <label className="text-[15px] mb-2">Product Name</label>
+              <input
+                type="text"
+                name="name"
+                value={updateDessert.name}
+                onChange={handleUpdateChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+              />
+              <label className="text-[15px] mb-2">Quantity</label>
+              <input
+                type="number"
+                name="stock"
+                value={updateDessert.stock}
+                onChange={handleUpdateChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                min={0}
+              />
+              <button
+                type="submit"
+                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+              >
+                UPDATE
               </button>
             </form>
           </div>
