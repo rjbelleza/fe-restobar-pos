@@ -8,6 +8,8 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { CirclePlus, Search, X, PencilLine, Eye } from 'lucide-react';
+import api from '../../api/axios';
+import Snackbar from '../Snackbar';
 
 const OtherProduct = () => {
   const [data, setData] = useState([]);
@@ -15,63 +17,109 @@ const OtherProduct = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newItem, setNewItem] = useState({ name: '', price: '' });
+  const [newItem, setNewItem] = useState({ name: '', price: '', category: 'others', imagePath: '' });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addItem, setAddItem] = useState(false);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [keyTrigger, setKeyTrigger] = useState(0);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  useEffect(() => {
-    fetch('/data/otherProduct.json')
-      .then(res => res.json())
-      .then(setData)
-      .catch(err => console.error('Error fetching data:', err));
-  }, []);
-
-  const handleUpdateClick = (row) => {
-    setSelectedRow({ ...row.original });
-    setShowUpdateModal(true);
-  };
-
-  const handleUpdateSubmit = (e) => {
+  const handleAddItem = async (e) => {
     e.preventDefault();
-    const updated = data.map((item, index) =>
-      index === selectedRow.index ? selectedRow : item
-    );
-    setData(updated);
-    setShowUpdateModal(false);
-    setSelectedRow(null);
+    try {
+      const response = await api.post('/itemList/add', newItem);
+      setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
+      setAddItem(false);
+      setKeyTrigger(prev => prev + 1);
+      setNewItem({ name: '', price: '', category: 'others', imagePath: '' });
+    } catch (error) {
+      setAddItem(false);
+      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.data?.message);
+      setShowSnackbar(true);
+    }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    const parsedValue = name === 'price' ? parseFloat(value) || 0 : value;
+    
+    const updateState = showUpdateModal ? setSelectedRow : setNewItem;
+    
+    updateState(prev => ({
+      ...prev,
+      [name]: name === 'price' 
+        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name]
+        : value
+    }));
+  };
 
-    if (selectedRow) {
-      setSelectedRow(prev => ({
-        ...prev,
-        [name]: parsedValue,
-      }));
-    } else {
-      setNewItem(prev => ({
-        ...prev,
-        [name]: parsedValue,
-      }));
+  const handleUpdateClick = (row) => {
+    setSelectedRow(row.original);
+    setShowUpdateModal(true);
+  };
+
+  const handleDeleteClick = (row) => {
+    setSelectedRow(row.original);
+    setShowDeleteModal(true);
+  };
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await api.put(`/itemList/update/${selectedRow.id}`, {
+        name: selectedRow.name,
+        price: selectedRow.price,
+        imagePath: selectedRow.imagePath
+      });
+      setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
+      setShowUpdateModal(false);
+      setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
     }
   };
 
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const newEntry = {
-      name: newItem.name,
-      price: Number(newItem.price),
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddItem(false);
-    setNewItem({ name: '', price: '' });
+  const deleteItem = async () => {
+    try {
+      const response = await api.patch(`/itemList/delete/${selectedRow.id}`);
+      setMessage(response.data?.message);
+      setResponseStatus(response.data?.status);
+      setShowSnackbar(true);
+      setShowDeleteModal(false);
+      setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowDeleteModal(false);
+      setShowSnackbar(true);
+    }
   };
 
-  const handleSearchChange = (e) => {
-    setGlobalFilter(e.target.value);
+  const fetchItems = async () => {
+    try {
+      const response = await api.get('/itemList');
+      setData(response.data?.data);
+      setLoading(false);
+    } catch (error) {
+      setMessage(error.response?.data?.message);
+      setResponseStatus(error.response?.data?.status);
+      setShowSnackbar(true);
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchItems();
+  }, [keyTrigger]);
 
   const columns = useMemo(() => [
     {
@@ -89,7 +137,7 @@ const OtherProduct = () => {
     {
       accessorKey: 'price',
       header: 'Price',
-      cell: info => "₱" + info.getValue().toFixed(2),
+      cell: info => "₱" + info.getValue(),
       size: 160,
     },
     {
@@ -98,19 +146,13 @@ const OtherProduct = () => {
       cell: ({ row }) => (
         <div className='space-x-2'>
             <button
-
-              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-            >
-              <Eye size={15} />
-            </button>
-            <button
               onClick={() => handleUpdateClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <PencilLine size={15} />
             </button>
             <button
-            
+              onClick={() => handleDeleteClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <X size={15} />
@@ -140,6 +182,15 @@ const OtherProduct = () => {
 
   return (
     <div className="h-[455px] w-full p-1 mt-[-35px]">
+
+      {showSnackbar && (
+        <Snackbar 
+          message={message && message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       {/* Search and Add */}
       <div className='flex items-center justify-end h-[35px] w-full mb-2'>
         <Search className='mr-[-30px] text-primary' />
@@ -148,7 +199,7 @@ const OtherProduct = () => {
           placeholder='Search Item by name'
           className='text-[13px] h-[35px] border border-black pl-9 pr-2 py-1 rounded-sm'
           value={globalFilter}
-          onChange={handleSearchChange}
+          onChange={(e) => setGlobalFilter(e.target.value)}
         />
         <div className="flex justify-end ml-2">
           <button
@@ -171,7 +222,7 @@ const OtherProduct = () => {
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+            <form className="flex flex-col" onSubmit={handleAddItem}>
               <label className="text-[15px] mb-2">Item Name</label>
               <input
                 type="text"
@@ -231,7 +282,7 @@ const OtherProduct = () => {
               <input 
                 type='number'
                 name="price"
-                value={selectedRow.price.toFixed(2) || ''}
+                value={selectedRow.price || ''}
                 onChange={handleInputChange}
                 className='w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7'                       
                 min={0}
@@ -246,6 +297,28 @@ const OtherProduct = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {showDeleteModal && selectedRow && (
+      <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+        <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
+          <div className='flex justify-center w-full'>
+            <p>Are you sure to delete this dish?</p>
+          </div>
+          <div className='flex justify-end gap-2 w-full mt-5'>
+            <button 
+              onClick={deleteItem}
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              Yes
+            </button>
+            <button 
+                onClick={() => setShowDeleteModal(false)}
+                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              No
+            </button>
+          </div>
+        </div>
+      </div>
       )}
 
       {/* Table */}
@@ -304,7 +377,7 @@ const OtherProduct = () => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  No records found
+                  {loading ? 'Fetching items...' : 'No items available'}
                 </td>
               </tr>
             )}
