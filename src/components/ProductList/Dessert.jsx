@@ -30,7 +30,7 @@ const Dessert = () => {
   const handleAddDessert = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/dessertList/add', newBeverage);
+      const response = await api.post('/dessertList/add', newDessert);
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
@@ -366,7 +366,7 @@ const Dessert = () => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  No records found
+                  {loading ? 'Fetching desserts...' : 'No desserts available'}
                 </td>
               </tr>
             )}
