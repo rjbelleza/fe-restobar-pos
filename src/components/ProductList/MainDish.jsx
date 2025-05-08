@@ -10,7 +10,6 @@ import {
 import { CirclePlus, Search, X, PencilLine, Eye } from 'lucide-react';
 import api from '../../api/axios';
 import Snackbar from '../Snackbar';
-//
 
 const MainDish = () => {
   const [data, setData] = useState([]);
@@ -18,7 +17,7 @@ const MainDish = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newDish, setNewDish] = useState({ name: '', price: '', category: 'mainDish', imagePath: '' });
+  const [newDish, setNewDish] = useState({ name: '', price: '', category: 'mainDish', image: null });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addDish, setAddDish] = useState(false);
   const [message, setMessage] = useState('');
@@ -30,14 +29,22 @@ const MainDish = () => {
 
   const handleAddMainDish = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', newDish.name);
+    formData.append('price', newDish.price);
+    formData.append('category', newDish.category);
+    formData.append('image', newDish.image); 
+  
     try {
-      const response = await api.post('/mainDish', newDish);
+      const response = await api.post('/mainDish', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setAddDish(false);
       setKeyTrigger(prev => prev + 1);
-      setNewDish({ name: '', price: '', category: 'mainDish', imagePath: '' });
+      setNewDish({ name: '', price: '', category: 'mainDish', image: null });
     } catch (error) {
       setAddDish(false);
       setResponseStatus(error.response?.data?.status);
@@ -47,14 +54,15 @@ const MainDish = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
     
     const updateState = showUpdateModal ? setSelectedRow : setNewDish;
     
     updateState(prev => ({
       ...prev,
       [name]: name === 'price' 
-        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name]
+        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+        : name === 'image' ? files[0]
         : value
     }));
   };
@@ -245,7 +253,15 @@ const MainDish = () => {
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+              <input
+                type="file"
+                name="image"
+                accept='image/*'
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
+              />
+              <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black">
                 ADD NEW MAIN DISH
               </button>
             </form>

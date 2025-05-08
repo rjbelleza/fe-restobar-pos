@@ -1,6 +1,8 @@
 import MenuCard from "../components/MenuCard";
 import { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
+import api from '../api/axios';
+import Snackbar from "./Snackbar";
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
@@ -10,24 +12,28 @@ const MenuList = () => {
     const [paymentMethod, setPaymentMethod] = useState('Cash');
     const [orderType, setOrderType] = useState('Dine-in');
     const [proceedModal, setProceedModal] = useState(false);
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [keyTrigger, setKeyTrigger] = useState(0);
+    const [showSnackbar, setShowSnackbar] = useState(false);
+    const [responseStatus, setResponseStatus] = useState('');
     const [focus, setFocus] = useState('value-meal');
 
     useEffect(() => {
-        fetch('/data/mainDish.json')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(jsonData => {
-                const itemsWithQuantity = jsonData.map(item => ({
-                    ...item,
-                    quantity: 0
-                }));
-                setMenuItems(itemsWithQuantity);
-            })
-            .catch(error => console.error('Error fetching data:', error));
+        const fetchMenuItems = async () => {
+            try {
+                const res = await api.get('/mainDishes'); 
+                setMenuItems(res.data?.data);
+                setLoading(false);
+            } catch (err) {
+                setMessage(err.response?.data?.data?.message || 'Failed to fetch menu items');
+                setResponseStatus(err.response?.data?.data?.status || 'error');
+                setLoading(false);
+                setShowSnackbar(true);
+            }
+        };
+    
+        fetchMenuItems(); 
     }, []);
 
     const calculateSubtotal = () => {
@@ -60,7 +66,7 @@ const MenuList = () => {
                 name: item.itemName,
                 price: typeof item.price === 'string' ? parseFloat(item.price.replace('₱', '')) : item.price,
                 quantity: 1,
-                image: item.image
+                imagePath: item.imagePath
             };
             setOrderItems([...orderItems, newItem]);
         }
@@ -109,6 +115,15 @@ const MenuList = () => {
 
     return (
         <div className="flex w-full">
+
+            {showSnackbar && (
+              <Snackbar 
+                message={message && message}
+                type={responseStatus}
+                onClose={() => setShowSnackbar(false)}
+              />
+            )}
+
             <div className="flex flex-col w-full">
                 <div className="flex justify-between w-full">
                     <p className="ml-5 font-bold text-[23px]">Categories</p>
@@ -146,15 +161,13 @@ const MenuList = () => {
                 </div>
 
                 <div className="w-full pb-30 px-10 py-10 overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
-                    {menuItems.length > 0 ? (
-                        <MenuCard 
-                            menu={menuItems} 
-                            onAddItem={handleAddItem}
-                            onRemoveItem={handleRemoveItem}
-                            trigger={orderItems}
-                        />
-                    ) : (
-                        <p>No products available</p>
+                    {loading ? 'Fetching Products...' : 
+                    (<MenuCard 
+                        menu={menuItems} 
+                        onAddItem={handleAddItem}
+                        onRemoveItem={handleRemoveItem}
+                        trigger={orderItems}
+                     />
                     )}
                 </div>
             </div>
@@ -169,7 +182,7 @@ const MenuList = () => {
                         {orderItems.map(item => (
                             <div key={`${item.id}-${item.quantity}`} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <img src={item.image} alt={item.name} className="h-[52px] w-[56px] rounded" />
+                                    <img src={`http://localhost:8000/storage/${item.imagePath}`} alt={item.name} className="h-[52px] w-[56px] rounded" />
                                     <div>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-sm font-semibold">₱{item.price.toFixed(2)}</p>
