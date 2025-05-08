@@ -255,10 +255,10 @@ const Beverage = () => {
                 name="image"
                 accept='image/*'
                 onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
                 required
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+              <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black">
                 ADD NEW BEVERAGE 
               </button>
             </form>

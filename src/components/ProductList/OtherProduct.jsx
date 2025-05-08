@@ -17,7 +17,7 @@ const OtherProduct = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newItem, setNewItem] = useState({ name: '', price: '', category: 'others', imagePath: '' });
+  const [newItem, setNewItem] = useState({ name: '', price: '', category: 'others', imagePath: null });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addItem, setAddItem] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,14 +29,22 @@ const OtherProduct = () => {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', newItem.name);
+    formData.append('price', newItem.price);
+    formData.append('category', newItem.category);
+    formData.append('image', newItem.image); 
+  
     try {
-      const response = await api.post('/itemList/add', newItem);
+      const response = await api.post('/itemList/add', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setAddItem(false);
       setKeyTrigger(prev => prev + 1);
-      setNewItem({ name: '', price: '', category: 'others', imagePath: '' });
+      setNewItem({ name: '', price: '', category: 'others', image: null });
     } catch (error) {
       setAddItem(false);
       setResponseStatus(error.response?.data?.status);
@@ -46,17 +54,19 @@ const OtherProduct = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
     
     const updateState = showUpdateModal ? setSelectedRow : setNewItem;
     
     updateState(prev => ({
       ...prev,
       [name]: name === 'price' 
-        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name]
+        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+        : name === 'image' ? files[0]
         : value
     }));
   };
+
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -242,7 +252,15 @@ const OtherProduct = () => {
                 min={0}
                 required
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
+              <input
+                type="file"
+                name="image"
+                accept='image/*'
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
+                required
+              />
+              <button type="submit" className="bg-primary text-white font-medium cursor-pointer py-3 rounded-sm hover:bg-mustard hover:text-black">
                 ADD NEW ITEM 
               </button>
             </form>
