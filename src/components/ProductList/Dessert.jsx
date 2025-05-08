@@ -17,7 +17,7 @@ const Dessert = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newDessert, setNewDessert] = useState({ name: '', price: '', category: 'desserts', imagePath: '' });
+  const [newDessert, setNewDessert] = useState({ name: '', price: '', category: 'desserts', imagePath: null  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addDessert, setAddDessert] = useState(false);
   const [message, setMessage] = useState('');
@@ -29,14 +29,22 @@ const Dessert = () => {
 
   const handleAddDessert = async (e) => {
     e.preventDefault();
+    const formData = new FormData();
+    formData.append('name', newDessert.name);
+    formData.append('price', newDessert.price);
+    formData.append('category', newDessert.category);
+    formData.append('image', newDessert.image); 
+  
     try {
-      const response = await api.post('/dessertList/add', newDessert);
+      const response = await api.post('/dessertList/add', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setAddDessert(false);
       setKeyTrigger(prev => prev + 1);
-      setNewDessert({ name: '', price: '', category: 'desserts', imagePath: '' });
+      setNewDessert({ name: '', price: '', category: 'beverages', image: null });
     } catch (error) {
       setAddDessert(false);
       setResponseStatus(error.response?.data?.status);
@@ -46,14 +54,15 @@ const Dessert = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, files } = e.target;
     
     const updateState = showUpdateModal ? setSelectedRow : setNewDessert;
     
     updateState(prev => ({
       ...prev,
       [name]: name === 'price' 
-        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name]
+        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+        : name === 'image' ? files[0]
         : value
     }));
   };
@@ -240,6 +249,14 @@ const Dessert = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
+                required
+              />
+              <input
+                type="file"
+                name="image"
+                accept='image/*'
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
               />
               <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
