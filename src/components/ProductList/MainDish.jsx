@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, PencilLine, Eye } from 'lucide-react';
+import { CirclePlus, Search, X, PencilLine } from 'lucide-react';
 import api from '../../api/axios';
 import Snackbar from '../Snackbar';
 
@@ -16,7 +16,7 @@ const MainDish = () => {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState({ id: '', name: '', price: '', image: null });
   const [newDish, setNewDish] = useState({ name: '', price: '', category: 'mainDish', image: null });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addDish, setAddDish] = useState(false);
@@ -26,7 +26,6 @@ const MainDish = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  //
 
   const handleAddMainDish = async (e) => {
     e.preventDefault();
@@ -63,13 +62,19 @@ const MainDish = () => {
       ...prev,
       [name]: name === 'price' 
         ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-        : name === 'image' ? files[0]
+        : name === 'image' ? files?.[0] || prev[name]
         : value
     }));
   };
 
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original);
+    // Make sure we get everything we need from the row
+    setSelectedRow({
+      id: row.original.id,
+      name: row.original.name,
+      price: row.original.price.toString(), // Convert to string to ensure consistency
+      image: row.original.image
+    });
     setShowUpdateModal(true);
   };
 
@@ -80,20 +85,55 @@ const MainDish = () => {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!selectedRow.id) {
+      setMessage('Error: No dish ID found');
+      setResponseStatus('error');
+      setShowSnackbar(true);
+      return;
+    }
+    
     try {
-      const response = await api.put(`/mainDish/update/${selectedRow.id}`, {
-        name: selectedRow.name,
-        price: selectedRow.price,
-        imagePath: selectedRow.imagePath
-      });
-      setMessage(response.data?.message);
-      setResponseStatus(response.data?.status);
+      const formData = new FormData();
+      // Ensure we append all required values
+      formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
+      formData.append('name', selectedRow.name || '');
+      formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
+      
+      // Handle image properly
+      if (selectedRow.image instanceof File) {
+        formData.append('image', selectedRow.image);
+      } else if (typeof selectedRow.image === 'string' && selectedRow.image) {
+        // If using existing image, send its path
+        formData.append('existingImage', selectedRow.image);
+      }
+
+      // Log what we're sending for debugging
+      console.log('Updating dish:', selectedRow.id);
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[0] === 'image' ? 'File object' : pair[1]));
+      }
+
+      // Laravel might need to correctly detect multipart/form-data
+      const response = await api.post(
+        `/mainDish/update/${selectedRow.id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      setMessage(response.data?.message || 'Dish updated successfully');
+      setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
       setShowUpdateModal(false);
-      setKeyTrigger(prev => prev + 1);
+      setKeyTrigger((prev) => prev + 1);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      console.error('Update error:', error.response || error);
+      setMessage(error.response?.data?.message || 'An error occurred during update');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
     }
   };
@@ -292,14 +332,25 @@ const MainDish = () => {
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
-                type="number"
+                type="text" 
                 name="price"
                 value={selectedRow.price || ''}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                min={0}
-                step="0.01"
                 required
+              />
+              <label className="text-[15px] mb-2">Image</label>
+              {typeof selectedRow.image === 'string' && selectedRow.image && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-500">Current image: {selectedRow.image.split('/').pop()}</p>
+                </div>
+              )}
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
               />
               <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
                 UPDATE
@@ -309,6 +360,7 @@ const MainDish = () => {
         </div>
       )}
 
+      {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedRow && (
       <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
         <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">

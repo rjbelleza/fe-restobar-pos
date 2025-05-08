@@ -80,19 +80,32 @@ const Beverage = () => {
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.put(`/beverageList/update/${selectedRow.id}`, {
-        name: selectedRow.name,
-        price: selectedRow.price,
-        imagePath: selectedRow.imagePath
-      });
+      const formData = new FormData();
+      formData.append('name', selectedRow.name);
+      formData.append('price', selectedRow.price);
+  
+      if (selectedRow.image instanceof File) {
+        formData.append('image', selectedRow.image);
+      }
+  
+      const response = await api.put(
+        `/beverageList/update/${selectedRow.id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+  
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setShowUpdateModal(false);
-      setKeyTrigger(prev => prev + 1);
+      setKeyTrigger((prev) => prev + 1);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.data?.message || 'An error occurred');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
     }
   };
