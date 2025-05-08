@@ -26,6 +26,7 @@ const MainDish = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  //
 
   const handleAddMainDish = async (e) => {
     e.preventDefault();
