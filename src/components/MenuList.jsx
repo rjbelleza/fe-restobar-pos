@@ -1,6 +1,6 @@
 import MenuCard from "../components/MenuCard";
 import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import api from '../api/axios';
 import Snackbar from "./Snackbar";
 
@@ -17,24 +17,25 @@ const MenuList = () => {
     const [keyTrigger, setKeyTrigger] = useState(0);
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [responseStatus, setResponseStatus] = useState('');
-    const [focus, setFocus] = useState('value-meal');
+    const [focus, setFocus] = useState('mainDish');
 
     useEffect(() => {
         const fetchMenuItems = async () => {
+            setLoading(true);
             try {
-                const res = await api.get('/mainDishes'); 
-                setMenuItems(res.data?.data);
-                setLoading(false);
+                const res = await api.get(`/products/${focus}`);
+                setMenuItems(res.data?.data || []);
             } catch (err) {
-                setMessage(err.response?.data?.data?.message || 'Failed to fetch menu items');
-                setResponseStatus(err.response?.data?.data?.status || 'error');
-                setLoading(false);
+                setMessage(err.response?.data?.message || 'Failed to fetch menu items');
+                setResponseStatus('error');
                 setShowSnackbar(true);
+            } finally {
+                setLoading(false);
             }
         };
     
-        fetchMenuItems(); 
-    }, []);
+        fetchMenuItems();
+    }, [focus]);
 
     const calculateSubtotal = () => {
         return orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -139,8 +140,8 @@ const MenuList = () => {
 
                 <div className="flex gap-2 px-10 mt-4">
                     <button 
-                        onClick={() => setFocus('value-meal')}
-                        className={`px-4 py-2 ${focus === 'value-meal' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                        onClick={() => setFocus('mainDish')}
+                        className={`px-4 py-2 ${focus === 'mainDish' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
                     >Value Meal
                     </button>
                     <button 
