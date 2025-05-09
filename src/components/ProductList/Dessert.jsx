@@ -16,7 +16,7 @@ const Dessert = () => {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRow, setSelectedRow] = useState({ id: '', name: '', price: '', imagePath: '', image: null });
   const [newDessert, setNewDessert] = useState({ name: '', price: '', category: 'desserts', imagePath: null  });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addDessert, setAddDessert] = useState(false);
@@ -26,6 +26,8 @@ const Dessert = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [imageChanged, setImageChanged] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddDessert = async (e) => {
     e.preventDefault();
@@ -56,19 +58,43 @@ const Dessert = () => {
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     
-    const updateState = showUpdateModal ? setSelectedRow : setNewDessert;
-    
-    updateState(prev => ({
-      ...prev,
-      [name]: name === 'price' 
-        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-        : name === 'image' ? files[0]
-        : value
-    }));
+    if (name === 'image' && files?.length > 0) {
+      // For file inputs
+      if (showUpdateModal) {
+        setImageChanged(true);
+        setSelectedRow(prev => ({
+          ...prev,
+          image: files[0]  // Store the File object
+        }));
+      } else {
+        setNewDessert(prev => ({
+          ...prev,
+          image: files[0]
+        }));
+      }
+    } else {
+      // For text inputs
+      const updateState = showUpdateModal ? setSelectedRow : setNewDessert;
+      updateState(prev => ({
+        ...prev,
+        [name]: name === 'price' 
+          ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+          : value
+      }));
+    }
   };
 
   const handleUpdateClick = (row) => {
-    setSelectedRow(row.original);
+    // Reset image state when opening the update modal
+    setImageChanged(false);
+    
+    setSelectedRow({
+      id: row.original.id,
+      name: row.original.name,
+      price: row.original.price.toString(),
+      imagePath: row.original.image, // Store the current image path
+      image: null // Reset the File object
+    });
     setShowUpdateModal(true);
   };
 
@@ -79,37 +105,51 @@ const Dessert = () => {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
+    if (!selectedRow.id) {
+      setMessage('Error: No dessert ID found');
+      setResponseStatus('error');
+      setShowSnackbar(true);
+      setIsSubmitting(false);
+      return;
+    }
+    
     try {
-      const response = await api.put(`/dessertList/update/${selectedRow.id}`, {
-        name: selectedRow.name,
-        price: selectedRow.price,
-        imagePath: selectedRow.imagePath
-      });
-      setMessage(response.data?.message);
-      setResponseStatus(response.data?.status);
+      const formData = new FormData();
+      formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
+      formData.append('name', selectedRow.name || '');
+      formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
+      
+      // Only append image if a new file was selected
+      if (imageChanged && selectedRow.image instanceof File) {
+        formData.append('image', selectedRow.image);
+      }
+
+      // Send the request
+      const response = await api.post(
+        `/dessertList/update/${selectedRow.id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      setMessage(response.data?.message || 'Dessert updated successfully');
+      setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
       setShowUpdateModal(false);
-      setKeyTrigger(prev => prev + 1);
+      setKeyTrigger((prev) => prev + 1);
+      setImageChanged(false);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      console.error('Update error:', error.response || error);
+      setMessage(error.response?.data?.message || 'An error occurred during update');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
-    }
-  };
-
-  const deleteDessert = async () => {
-    try {
-      const response = await api.patch(`/dessertList/delete/${selectedRow.id}`);
-      setMessage(response.data?.message);
-      setResponseStatus(response.data?.status);
-      setShowSnackbar(true);
-      setShowDeleteModal(false);
-      setKeyTrigger(prev => prev + 1);
-    } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
-      setShowDeleteModal(false);
-      setShowSnackbar(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -156,12 +196,14 @@ const Dessert = () => {
         <div className='space-x-2'>
             <button
               onClick={() => handleUpdateClick(row)}
+              disabled={isSubmitting}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <PencilLine size={15} />
             </button>
             <button
               onClick={() => handleDeleteClick(row)}
+              disabled={isSubmitting}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <X size={15} />
@@ -170,7 +212,7 @@ const Dessert = () => {
       ),
       size: 20,
     },
-  ], []);
+  ], [isSubmitting]);
 
   const table = useReactTable({
     data,
@@ -194,7 +236,7 @@ const Dessert = () => {
 
       {showSnackbar && (
         <Snackbar 
-          message={message && message}
+          message={message}
           type={responseStatus}
           onClose={() => setShowSnackbar(false)}
         />
@@ -213,6 +255,7 @@ const Dessert = () => {
         <div className="flex justify-end ml-2">
           <button
             onClick={() => setAddDessert(true)}
+            disabled={isSubmitting}
             className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
           >
             <CirclePlus />
@@ -227,7 +270,10 @@ const Dessert = () => {
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD NEW DESSERT
-              <button onClick={() => setAddDessert(false)} className="text-gray-800 hover:text-gray-600">
+              <button 
+                onClick={() => setAddDessert(false)} className="text-gray-800 hover:text-gray-600"
+                disabled={isSubmitting}
+              >
                 <X size={20} />
               </button>
             </p>
@@ -240,16 +286,18 @@ const Dessert = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
-                type="number"
+                type="text"
                 name="price"
                 value={newDessert.price}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
                 required
+                disabled={isSubmitting}
               />
               <input
                 type="file"
@@ -258,9 +306,10 @@ const Dessert = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
                 required
+                disabled={isSubmitting}
               />
               <button type="submit" className="bg-primary cursor-pointer text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
-                ADD NEW DESSERT 
+                {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'}
               </button>
             </form>
           </div>
@@ -273,11 +322,14 @@ const Dessert = () => {
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               UPDATE DESSERT
-              <button onClick={() => setShowUpdateModal(false)} className="text-gray-800 hover:text-gray-600">
+              <button 
+                onClick={() => setShowUpdateModal(false)} className="text-gray-800 hover:text-gray-600"
+                disabled={isSubmitting}
+              >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+            <form className="flex flex-col" onSubmit={handleUpdateSubmit} encType="multipart/form-data">
               <label className="text-[15px] mb-2">Dessert Name</label>
               <input
                 type="text"
@@ -286,19 +338,44 @@ const Dessert = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
-                type="number"
+                type="text"
                 name="price"
                 value={selectedRow.price}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 min={0}
                 required
+                disabled={isSubmitting}
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
-                UPDATE DESSERT
+              <label className="text-[15px] mb-2">Image</label>
+              {selectedRow.imagePath && !imageChanged && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-500">Current image: {selectedRow.imagePath.split('/').pop()}</p>
+                  <p className="text-xs text-gray-400">Upload a new image to change it, or leave empty to keep current image</p>
+                </div>
+              )}
+              {imageChanged && selectedRow.image instanceof File && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-500">New image selected: {selectedRow.image.name}</p>
+                </div>
+              )}
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                disabled={isSubmitting}
+              />
+              <button 
+                type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black"
+                disabled={isSubmitting}
+              >
+                  {isSubmitting ? 'UPDATING...' : 'UPDATE'}
               </button>
             </form>
           </div>
@@ -314,11 +391,13 @@ const Dessert = () => {
           <div className='flex justify-end gap-2 w-full mt-5'>
             <button 
               onClick={deleteDessert}
+              disabled={isSubmitting}
               className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
               Yes
             </button>
             <button 
                 onClick={() => setShowDeleteModal(false)}
+                disabled={isSubmitting}
                 className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
               No
             </button>

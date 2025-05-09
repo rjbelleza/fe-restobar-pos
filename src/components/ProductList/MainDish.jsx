@@ -16,7 +16,7 @@ const MainDish = () => {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState({ id: '', name: '', price: '', image: null });
+  const [selectedRow, setSelectedRow] = useState({ id: '', name: '', price: '', imagePath: '', image: null });
   const [newDish, setNewDish] = useState({ name: '', price: '', category: 'mainDish', image: null });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addDish, setAddDish] = useState(false);
@@ -26,54 +26,81 @@ const MainDish = () => {
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [imageChanged, setImageChanged] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddMainDish = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    
     const formData = new FormData();
     formData.append('name', newDish.name);
     formData.append('price', newDish.price);
     formData.append('category', newDish.category);
-    formData.append('image', newDish.image); 
+    
+    if (newDish.image) {
+      formData.append('image', newDish.image); 
+    }
   
     try {
       const response = await api.post('/mainDish', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setMessage(response.data?.message);
-      setResponseStatus(response.data?.status);
+      setMessage(response.data?.message || 'Dish added successfully');
+      setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
       setAddDish(false);
       setKeyTrigger(prev => prev + 1);
       setNewDish({ name: '', price: '', category: 'mainDish', image: null });
     } catch (error) {
-      setAddDish(false);
-      setResponseStatus(error.response?.data?.status);
-      setMessage(error.response?.data?.message);
+      setMessage(error.response?.data?.message || 'Error adding dish');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
+    } finally {
+      setIsSubmitting(false);
+      setAddDish(false);
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     
-    const updateState = showUpdateModal ? setSelectedRow : setNewDish;
-    
-    updateState(prev => ({
-      ...prev,
-      [name]: name === 'price' 
-        ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-        : name === 'image' ? files?.[0] || prev[name]
-        : value
-    }));
+    if (name === 'image' && files?.length > 0) {
+      // For file inputs
+      if (showUpdateModal) {
+        setImageChanged(true);
+        setSelectedRow(prev => ({
+          ...prev,
+          image: files[0]  // Store the File object
+        }));
+      } else {
+        setNewDish(prev => ({
+          ...prev,
+          image: files[0]
+        }));
+      }
+    } else {
+      // For text inputs
+      const updateState = showUpdateModal ? setSelectedRow : setNewDish;
+      updateState(prev => ({
+        ...prev,
+        [name]: name === 'price' 
+          ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+          : value
+      }));
+    }
   };
 
   const handleUpdateClick = (row) => {
-    // Make sure we get everything we need from the row
+    // Reset image state when opening the update modal
+    setImageChanged(false);
+    
     setSelectedRow({
       id: row.original.id,
       name: row.original.name,
-      price: row.original.price.toString(), // Convert to string to ensure consistency
-      image: row.original.image
+      price: row.original.price.toString(),
+      imagePath: row.original.image, // Store the current image path
+      image: null // Reset the File object
     });
     setShowUpdateModal(true);
   };
@@ -85,36 +112,28 @@ const MainDish = () => {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     if (!selectedRow.id) {
       setMessage('Error: No dish ID found');
       setResponseStatus('error');
       setShowSnackbar(true);
+      setIsSubmitting(false);
       return;
     }
     
     try {
       const formData = new FormData();
-      // Ensure we append all required values
       formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
       formData.append('name', selectedRow.name || '');
       formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
       
-      // Handle image properly
-      if (selectedRow.image instanceof File) {
+      // Only append image if a new file was selected
+      if (imageChanged && selectedRow.image instanceof File) {
         formData.append('image', selectedRow.image);
-      } else if (typeof selectedRow.image === 'string' && selectedRow.image) {
-        // If using existing image, send its path
-        formData.append('existingImage', selectedRow.image);
       }
 
-      // Log what we're sending for debugging
-      console.log('Updating dish:', selectedRow.id);
-      for (let pair of formData.entries()) {
-        console.log(pair[0] + ': ' + (pair[0] === 'image' ? 'File object' : pair[1]));
-      }
-
-      // Laravel might need to correctly detect multipart/form-data
+      // Send the request
       const response = await api.post(
         `/mainDish/update/${selectedRow.id}`,
         formData,
@@ -130,39 +149,45 @@ const MainDish = () => {
       setShowSnackbar(true);
       setShowUpdateModal(false);
       setKeyTrigger((prev) => prev + 1);
+      setImageChanged(false);
     } catch (error) {
       console.error('Update error:', error.response || error);
       setMessage(error.response?.data?.message || 'An error occurred during update');
       setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const deleteDish = async () => {
+    setIsSubmitting(true);
     try {
       const response = await api.patch(`/mainDish/delete/${selectedRow.id}`);
-      setMessage(response.data?.message);
-      setResponseStatus(response.data?.status);
+      setMessage(response.data?.message || 'Dish deleted successfully');
+      setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
       setShowDeleteModal(false);
       setKeyTrigger(prev => prev + 1);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
-      setShowDeleteModal(false);
+      setMessage(error.response?.data?.message || 'Error deleting dish');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
+    } finally {
+      setShowDeleteModal(false);
+      setIsSubmitting(false);
     }
   };
 
   const fetchMainDish = async () => {
     try {
       const response = await api.get('/mainDishes');
-      setData(response.data?.data);
-      setLoading(false);
+      setData(response.data?.data || []);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.data?.message || 'Error fetching dishes');
+      setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
+    } finally {
       setLoading(false);
     }
   };
@@ -197,13 +222,15 @@ const MainDish = () => {
         <div className='space-x-2'>
           <button
             onClick={() => handleUpdateClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            disabled={isSubmitting}
+            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2 disabled:opacity-50"
           >
             <PencilLine size={15} />
           </button>
           <button
             onClick={() => handleDeleteClick(row)}
-            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+            disabled={isSubmitting}
+            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2 disabled:opacity-50"
           >
             <X size={15} />
           </button>
@@ -211,7 +238,7 @@ const MainDish = () => {
       ),
       size: 20,
     },
-  ], []);
+  ], [isSubmitting]);
 
   const table = useReactTable({
     data,
@@ -236,7 +263,7 @@ const MainDish = () => {
       
       {showSnackbar && (
         <Snackbar 
-          message={message && message}
+          message={message}
           type={responseStatus}
           onClose={() => setShowSnackbar(false)}
         />
@@ -257,7 +284,8 @@ const MainDish = () => {
         <div className="flex justify-end ml-2">
           <button
             onClick={() => setAddDish(true)}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+            disabled={isSubmitting}
+            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black disabled:opacity-50"
           >
             <CirclePlus />
             Add New Dish
@@ -271,11 +299,15 @@ const MainDish = () => {
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD NEW DISH
-              <button onClick={() => setAddDish(false)} className="text-gray-800 hover:text-gray-600">
+              <button 
+                onClick={() => setAddDish(false)} 
+                disabled={isSubmitting}
+                className="text-gray-800 hover:text-gray-600 disabled:opacity-50"
+              >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddMainDish}>
+            <form className="flex flex-col" onSubmit={handleAddMainDish} encType="multipart/form-data">
               <label className="text-[15px] mb-2">Dish Name</label>
               <input
                 type="text"
@@ -284,6 +316,7 @@ const MainDish = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
@@ -293,17 +326,24 @@ const MainDish = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
+              <label className="text-[15px] mb-2">Image</label>
               <input
                 type="file"
                 name="image"
-                accept='image/*'
+                accept="image/*"
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
                 required
+                disabled={isSubmitting}
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black">
-                ADD NEW MAIN DISH
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black disabled:opacity-50"
+              >
+                {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'}
               </button>
             </form>
           </div>
@@ -316,11 +356,15 @@ const MainDish = () => {
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               UPDATE MAIN DISH
-              <button onClick={() => setShowUpdateModal(false)} className="text-gray-800 hover:text-gray-600">
+              <button 
+                onClick={() => setShowUpdateModal(false)} 
+                disabled={isSubmitting}
+                className="text-gray-800 hover:text-gray-600 disabled:opacity-50"
+              >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleUpdateSubmit}>
+            <form className="flex flex-col" onSubmit={handleUpdateSubmit} encType="multipart/form-data">
               <label className="text-[15px] mb-2">Dish Name</label>
               <input
                 type="text"
@@ -329,6 +373,7 @@ const MainDish = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
@@ -338,11 +383,18 @@ const MainDish = () => {
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
+                disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Image</label>
-              {typeof selectedRow.image === 'string' && selectedRow.image && (
+              {selectedRow.imagePath && !imageChanged && (
                 <div className="mb-2">
-                  <p className="text-sm text-gray-500">Current image: {selectedRow.image.split('/').pop()}</p>
+                  <p className="text-sm text-gray-500">Current image: {selectedRow.imagePath.split('/').pop()}</p>
+                  <p className="text-xs text-gray-400">Upload a new image to change it, or leave empty to keep current image</p>
+                </div>
+              )}
+              {imageChanged && selectedRow.image instanceof File && (
+                <div className="mb-2">
+                  <p className="text-sm text-gray-500">New image selected: {selectedRow.image.name}</p>
                 </div>
               )}
               <input
@@ -351,9 +403,14 @@ const MainDish = () => {
                 accept="image/*"
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                disabled={isSubmitting}
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
-                UPDATE
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black disabled:opacity-50"
+              >
+                {isSubmitting ? 'UPDATING...' : 'UPDATE'}
               </button>
             </form>
           </div>
@@ -370,12 +427,14 @@ const MainDish = () => {
           <div className='flex justify-end gap-2 w-full mt-5'>
             <button 
               onClick={deleteDish}
-              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
-              Yes
+              disabled={isSubmitting}
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black disabled:opacity-50'>
+              {isSubmitting ? 'Processing...' : 'Yes'}
             </button>
             <button 
-                onClick={() => setShowDeleteModal(false)}
-                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
+              onClick={() => setShowDeleteModal(false)}
+              disabled={isSubmitting}
+              className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black disabled:opacity-50'>
               No
             </button>
           </div>
