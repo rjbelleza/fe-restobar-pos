@@ -31,6 +31,7 @@ const OtherProduct = () => {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('name', newItem.name);
     formData.append('price', newItem.price);
@@ -328,7 +329,7 @@ const OtherProduct = () => {
                 disabled={isSubmitting}
               />
               <button type="submit" className="bg-primary text-white font-medium cursor-pointer py-3 rounded-sm hover:bg-mustard hover:text-black">
-                  {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'} 
+                  {isSubmitting ? 'ADDING...' : 'ADD NEW ITEM'} 
               </button>
             </form>
           </div>

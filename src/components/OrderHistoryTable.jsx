@@ -157,7 +157,7 @@ const OrderHistoryTable = () => {
                     <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Product</th>
                     <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Price (₱)</th>
                     <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Quantity</th>
-                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Total Cost (₱)</th>
+                    <th className='bg-gray-200 font-medium py-2 px-3 border border-gray-200'>Total Price (₱)</th>
                   </tr>
                 </thead>
                 <tbody>

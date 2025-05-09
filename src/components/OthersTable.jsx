@@ -114,7 +114,11 @@ const OthersTable = ({openSettingsModal}) => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewItem(prev => ({ ...prev, [name]: value }));
+      setNewItem(prev => ({ 
+        ...prev, [name]: name === 'stock' 
+                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+                       : value
+      }));
     }
   };
 
@@ -313,7 +317,7 @@ useEffect(() => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={newItem.stock}
                 onChange={handleInputChange}

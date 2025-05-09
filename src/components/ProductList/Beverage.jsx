@@ -31,6 +31,7 @@ const Beverage = () => {
 
   const handleAddBeverage = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('name', newBeverage.name);
     formData.append('price', newBeverage.price);
@@ -324,7 +325,8 @@ const Beverage = () => {
                 required
                 disabled={isSubmitting}
               />
-              <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black">
+              <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black"
+              >
                   {isSubmitting ? 'ADDING...' : 'ADD NEW BEVERAGE'}
               </button>
             </form>

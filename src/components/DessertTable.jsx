@@ -113,7 +113,11 @@ const DessertTable = ({openSettingsModal}) => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewDessert(prev => ({ ...prev, [name]: value }));
+      setNewDessert(prev => ({ 
+        ...prev, [name]: name === 'stock' 
+                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+                       : value
+      }));
     }
   };
 
@@ -310,7 +314,7 @@ const DessertTable = ({openSettingsModal}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={newDessert.stock}
                 onChange={handleInputChange}

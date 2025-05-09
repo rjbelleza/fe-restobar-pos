@@ -31,6 +31,7 @@ const Dessert = () => {
 
   const handleAddDessert = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('name', newDessert.name);
     formData.append('price', newDessert.price);
@@ -328,7 +329,7 @@ const Dessert = () => {
                 disabled={isSubmitting}
               />
               <button type="submit" className="bg-primary cursor-pointer text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
-                {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'}
+                {isSubmitting ? 'ADDING...' : 'ADD NEW DESSERT'}
               </button>
             </form>
           </div>

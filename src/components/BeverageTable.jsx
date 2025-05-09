@@ -110,7 +110,11 @@ const BeverageTable = ({openSettingsModal}) => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewBeverage(prev => ({ ...prev, [name]: value }));
+      setNewBeverage(prev => ({ 
+        ...prev, [name]: name === 'stock' 
+                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+                       : value
+      }));
     }
   };
 
@@ -307,7 +311,7 @@ const BeverageTable = ({openSettingsModal}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={newBeverage.stock}
                 onChange={handleInputChange}

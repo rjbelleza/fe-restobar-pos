@@ -101,7 +101,11 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewIngredient(prev => ({ ...prev, [name]: value }));
+      setNewIngredient(prev => ({ 
+        ...prev, [name]: name === 'stock' 
+                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+                       : value
+      }));
     }
   };
 
@@ -276,7 +280,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={newIngredient.stock}
                 onChange={handleInputChange}
