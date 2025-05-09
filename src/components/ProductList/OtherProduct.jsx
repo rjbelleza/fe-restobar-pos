@@ -153,6 +153,25 @@ const OtherProduct = () => {
     }
   };
 
+  const deleteItem = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await api.patch(`/itemList/delete/${selectedRow.id}`);
+      setMessage(response.data?.message || 'Item deleted successfully');
+      setResponseStatus(response.data?.status || 'success');
+      setShowSnackbar(true);
+      setShowDeleteModal(false);
+      setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error item');
+      setResponseStatus(error.response?.data?.status || 'error');
+      setShowSnackbar(true);
+    } finally {
+      setShowDeleteModal(false);
+      setIsSubmitting(false);
+    }
+  };
+
   const fetchItems = async () => {
     try {
       const response = await api.get('/itemList');

@@ -153,6 +153,25 @@ const Dessert = () => {
     }
   };
 
+  const deleteDessert = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await api.patch(`/dessertList/delete/${selectedRow.id}`);
+      setMessage(response.data?.message || 'Dessert deleted successfully');
+      setResponseStatus(response.data?.status || 'success');
+      setShowSnackbar(true);
+      setShowDeleteModal(false);
+      setKeyTrigger(prev => prev + 1);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Error dessert');
+      setResponseStatus(error.response?.data?.status || 'error');
+      setShowSnackbar(true);
+    } finally {
+      setShowDeleteModal(false);
+      setIsSubmitting(false);
+    }
+  };
+
   const fetchDessert = async () => {
     try {
       const response = await api.get('/dessertList');
@@ -393,7 +412,7 @@ const Dessert = () => {
               onClick={deleteDessert}
               disabled={isSubmitting}
               className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
-              Yes
+              {isSubmitting ? 'Processing...' : 'Yes'}
             </button>
             <button 
                 onClick={() => setShowDeleteModal(false)}

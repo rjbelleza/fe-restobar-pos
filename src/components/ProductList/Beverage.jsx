@@ -154,6 +154,7 @@ const Beverage = () => {
   };
 
   const deleteBeverage = async () => {
+      setIsSubmitting(true)
     try {
       const response = await api.patch(`/beverageList/delete/${selectedRow.id}`);
       setMessage(response.data?.message);
@@ -324,7 +325,7 @@ const Beverage = () => {
                 disabled={isSubmitting}
               />
               <button type="submit" className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black">
-                  {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'}
+                  {isSubmitting ? 'ADDING...' : 'ADD NEW BEVERAGE'}
               </button>
             </form>
           </div>
@@ -335,7 +336,7 @@ const Beverage = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
           <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
             <div className='flex justify-center w-full'>
-              <p>Are you sure to delete this dish?</p>
+              <p>Are you sure to delete this beverage?</p>
             </div>
             <div className='flex justify-end gap-2 w-full mt-5'>
               <button 
