@@ -100,15 +100,6 @@ const BeverageTable = ({openSettingsModal}) => {
     }
   };
 
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (showUpdateModal) {

@@ -18,7 +18,7 @@ const DessertTable = ({openSettingsModal}) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addDessert, setAddDessert] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newDessert, setNewDessert] = useState({ name: '', stock: '', category: 'desserts' });
+  const [newDessert, setNewDessert] = useState({ name: '', stock: '', category: 'dessert' });
   const [globalFilter, setGlobalFilter] = useState('');
   const [keyTrigger, setKeyTrigger] = useState(0);
   const [message, setMessage] = useState('');
@@ -32,6 +32,7 @@ const DessertTable = ({openSettingsModal}) => {
   const [updateDessert, setUpdateDessert] = useState({
     name: '',
     stock: 0,
+    category: 'dessert'
   });
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const DessertTable = ({openSettingsModal}) => {
       setUpdateDessert({
         name: selectedRow.name || '',
         stock: selectedRow.stock || 0,
+        category: selectedRow.category || ''
       });
     }
   }, [selectedRow]);
@@ -47,7 +49,7 @@ const DessertTable = ({openSettingsModal}) => {
     const { name, value } = e.target;
     setUpdateDessert(prev => ({
       ...prev, 
-      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
     }));
   };
 
@@ -58,7 +60,7 @@ const DessertTable = ({openSettingsModal}) => {
             return;
         }
 
-        const response = await api.put(`/dessert/update/${selectedRow.id}`, updateDessert);
+        const response = await api.put(`/product/update/${selectedRow.id}`, updateDessert);
         setMessage(response.data?.message);
         setResponseStatus(response.data?.status);
         setShowUpdateModal(false);
@@ -83,18 +85,11 @@ const DessertTable = ({openSettingsModal}) => {
     setShowDeleteModal(true);
   };
 
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
-  };
-
   const deleteDessert = async () => {
     try {
-      const response = await api.patch(`/dessert/delete/${selectedRow.id}`);
+      const response = await api.patch(`/product/disable/${selectedRow.id}`, {
+        category: 'dessert'
+      });
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
@@ -124,13 +119,13 @@ const DessertTable = ({openSettingsModal}) => {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/dessert', newDessert);
+      const response = await api.post('/product/add', newDessert);
       setFeedback(response.data?.message);
       setStatus(response.data?.status);
       setShowSnackbar(true);
       setAddDessert(false);
       setKeyTrigger(prev => prev + 1);
-      setNewBeverage({ name: '', stock: '' , category: 'desserts'});
+      setNewDessert({ name: '', stock: '' , category: 'dessert'});
     } catch (error) {
       setMessage(error.response?.data?.message);
       setResponseStatus(error.response?.data?.status);
@@ -145,12 +140,16 @@ const DessertTable = ({openSettingsModal}) => {
 
   const fetchDesserts = async () => {
     try {
-      const response = await api.get('/desserts');
-      setData(response.data?.data);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'dessert'
+        }
+      });
+      setData(response.data);
       setLoading(false);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.message);
+      setResponseStatus(error.response?.status);
       setShowSnackbar(true);
       setLoading(false);
     }
@@ -356,7 +355,7 @@ const DessertTable = ({openSettingsModal}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={updateDessert.stock}
                 onChange={handleUpdateChange}
