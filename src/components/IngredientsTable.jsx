@@ -67,6 +67,8 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
         setResponseStatus(error.response?.data?.status);
         setShowUpdateModal(false);
         setShowSnackbar(true);
+    } finally {
+        setShowUpdateModal(false);
     }
   };
 
@@ -87,8 +89,8 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
 
   const deleteIngredient = async () => {
     try {
-      const response = await api.patch(`/ingredient/delete/${selectedRow.id}`);
-      setMessage(response.data.message);
+      const response = await api.patch(`/ingredient/disable/${selectedRow.id}`);
+      setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
@@ -132,6 +134,9 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
       setResponseStatus(error.response?.data?.status);
       setMessage(error.response?.data?.message);
       setShowSnackbar(true)
+    } finally {
+      setAddIngredients(false);
+      setNewIngredient({ name: '', stock: '', category: 'ingredients' });
     }
   };
 
@@ -356,7 +361,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={updateIngredient.stock}
                 onChange={handleUpdateChange}
