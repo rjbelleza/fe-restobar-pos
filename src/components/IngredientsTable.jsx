@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Settings, PencilLine, Eye, Trash } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from './Snackbar';
 
@@ -112,7 +112,11 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const handleAddIngredients = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/ingredient', newIngredient);
+         const payload = {
+      ...newIngredient,
+      stock: parseFloat(newIngredient.stock || 0),
+    };
+      const response = await api.post('/ingredient/add', payload);
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
@@ -132,15 +136,18 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   };
 
   const fetchIngredients = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/ingredients');
-      setData(response.data?.data);
+      const response = await api.get('/ingredient/fetch');
+      setData(response.data);
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
       setResponseStatus(error.response?.data?.status);
       setShowSnackbar(true);
       setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 

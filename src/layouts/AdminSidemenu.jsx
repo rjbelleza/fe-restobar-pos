@@ -10,7 +10,8 @@ import {
     ChartArea, 
     Users, 
     SquareChartGantt,
-    BookText    
+    BookText,
+    TableProperties    
 } from 'lucide-react';
 
 const AdminSidemenu = () => {
