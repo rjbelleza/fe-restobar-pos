@@ -80,6 +80,11 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     setShowDeleteModal(true);
   };
 
+  const handleModalClose = () => {
+    setAddIngredients(false);
+    setNewIngredient({ name: '', stock: '', category: 'ingredients' });
+  };
+
   const deleteIngredient = async () => {
     try {
       const response = await api.patch(`/ingredient/delete/${selectedRow.id}`);
@@ -270,7 +275,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD INGREDIENT
               <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddIngredients(false)} className="cursor-pointer">
+                <button onClick={handleModalClose} className="cursor-pointer">
                   <X size={20} />
                 </button>
               </span>
