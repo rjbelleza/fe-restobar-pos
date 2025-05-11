@@ -41,13 +41,21 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     }
   }, [selectedRow]);
 
-  const handleUpdateChange = (e) => {
+ const handleUpdateChange = (e) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    if (name === 'stock') {
+        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      }
+
     setUpdateIngredient(prev => ({
-      ...prev, 
-      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+      ...prev,
+      [name]: processedValue
     }));
   };
+
 
   const handleSaveUpdate = async (e) => {
     e.preventDefault();    

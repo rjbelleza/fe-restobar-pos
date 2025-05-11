@@ -45,11 +45,18 @@ const DessertTable = ({openSettingsModal}) => {
     }
   }, [selectedRow]);
 
-  const handleUpdateChange = (e) => {
+    const handleUpdateChange = (e) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    if (name === 'stock') {
+        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      }
+
     setUpdateDessert(prev => ({
-      ...prev, 
-      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
+      ...prev,
+      [name]: processedValue
     }));
   };
 
