@@ -339,7 +339,7 @@ const DessertTable = ({openSettingsModal}) => {
         </div>
       )}
 
-            {/* (Update modal remains unchanged) */}
+            {/* (Update modal remains unchanged)// */}
             {showUpdateModal && selectedRow && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
