@@ -62,13 +62,35 @@ const MenuList = () => {
     };
 
     const handleAddItem = (item) => {
+        // Check if the item is available based on the track_stock flag
+        const isAvailable = item.track_stock 
+            ? item.stock > 0 
+            : item.available_quantity > 0;
+        
+        if (!isAvailable) {
+            setMessage('Item is out of stock');
+            setResponseStatus('error');
+            setShowSnackbar(true);
+            return;
+        }
+
         const existingItem = orderItems.find(orderItem => orderItem.id === item.id);
+        
         if (existingItem) {
+            // Check quantity limits based on track_stock flag
+            const maxQuantity = item.track_stock ? item.stock : item.available_quantity;
+            
+            if (existingItem.quantity >= maxQuantity) {
+                setMessage(`Maximum quantity (${maxQuantity}) reached`);
+                setResponseStatus('error');
+                setShowSnackbar(true);
+                return;
+            }
             handleIncrement(item.id);
         } else {
             const newItem = {
                 id: item.id,
-                name: item.itemName,
+                name: item.name,
                 price: typeof item.price === 'string' ? parseFloat(item.price.replace('₱', '')) : item.price,
                 quantity: 1,
                 imagePath: item.imagePath
