@@ -7,19 +7,29 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, PencilLine } from 'lucide-react';
+import { CirclePlus, Search, X, PencilLine, CircleMinus } from 'lucide-react';
 import api from '../../api/axios';
 import Snackbar from '../Snackbar';
 
 const MainDish = () => {
   const [data, setData] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
-  const [selectedRow, setSelectedRow] = useState({ id: '', name: '', price: '', imagePath: '', image: null });
-  const [newDish, setNewDish] = useState({ name: '', price: '', category: 'mainDish', image: null });
+  const [showDishModal, setShowDishModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentDish, setCurrentDish] = useState({ 
+    id: '',
+    name: '', 
+    price: '', 
+    category: 'main_dish', 
+    image: null,
+    imagePath: '',
+    ingredients: [] 
+  });
+  const [ingredientQuantities, setIngredientQuantities] = useState({});
+  const [ingredientSearch, setIngredientSearch] = useState('');
   const [globalFilter, setGlobalFilter] = useState('');
-  const [addDish, setAddDish] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [keyTrigger, setKeyTrigger] = useState(0);
@@ -29,60 +39,130 @@ const MainDish = () => {
   const [imageChanged, setImageChanged] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddMainDish = async (e) => {
+  useEffect(() => {
+    if (ingredients.length > 0) {
+      const initialQuantities = {};
+      ingredients.forEach(ing => {
+        initialQuantities[ing.id] = 0;
+      });
+      setIngredientQuantities(initialQuantities);
+    }
+  }, [ingredients]);
+
+  const handleIncrement = (ingredientId) => {
+    const currentQuantity = ingredientQuantities[ingredientId] || 0;
+    const newQuantity = currentQuantity + 1;
+    
+    setIngredientQuantities(prev => ({ ...prev, [ingredientId]: newQuantity }));
+    
+    if (currentQuantity === 0) {
+      setCurrentDish(prev => ({
+        ...prev,
+        ingredients: [...prev.ingredients, { id: ingredientId, quantity: newQuantity }]
+      }));
+    } else {
+      setCurrentDish(prev => ({
+        ...prev,
+        ingredients: prev.ingredients.map(i => 
+          i.id === ingredientId ? { ...i, quantity: newQuantity } : i
+        )
+      }));
+    }
+  };
+
+  const handleDecrement = (ingredientId) => {
+    const currentQuantity = ingredientQuantities[ingredientId] || 0;
+    const newQuantity = Math.max(0, currentQuantity - 1);
+    
+    setIngredientQuantities(prev => ({ ...prev, [ingredientId]: newQuantity }));
+    
+    if (newQuantity === 0) {
+      setCurrentDish(prev => ({
+        ...prev,
+        ingredients: prev.ingredients.filter(i => i.id !== ingredientId)
+      }));
+    } else {
+      setCurrentDish(prev => ({
+        ...prev,
+        ingredients: prev.ingredients.map(i => 
+          i.id === ingredientId ? { ...i, quantity: newQuantity } : i
+        )
+      }));
+    }
+  };
+
+  const handleDishSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     const formData = new FormData();
-    formData.append('name', newDish.name);
-    formData.append('price', newDish.price);
-    formData.append('category', newDish.category);
+    formData.append('name', currentDish.name);
+    formData.append('price', currentDish.price);
+    formData.append('category', currentDish.category);
     
-    if (newDish.image) {
-      formData.append('image', newDish.image); 
+    if (currentDish.image) {
+      formData.append('image', currentDish.image); 
     }
-  
+
+    currentDish.ingredients.forEach((ingredient, index) => {
+      formData.append(`ingredients[${index}][id]`, ingredient.id);
+      formData.append(`ingredients[${index}][quantity]`, ingredient.quantity);
+    });
+
     try {
-      const response = await api.post('/mainDish', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setMessage(response.data?.message || 'Dish added successfully');
+      let response;
+      if (isEditing) {
+        formData.append('_method', 'PUT');
+        response = await api.post(`/product/update/${currentDish.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        response = await api.post('/product/add', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      }
+
+      setMessage(isEditing ? 'Dish updated successfully' : 'Dish added successfully');
       setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
-      setAddDish(false);
+      setShowDishModal(false);
       setKeyTrigger(prev => prev + 1);
-      setNewDish({ name: '', price: '', category: 'mainDish', image: null });
+      resetDishForm();
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error adding dish');
+      setMessage(error.response?.data?.message || (isEditing ? 'Error updating dish' : 'Error adding dish'));
       setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
     } finally {
       setIsSubmitting(false);
-      setAddDish(false);
     }
+  };
+
+  const resetDishForm = () => {
+    setCurrentDish({ 
+      id: '',
+      name: '', 
+      price: '', 
+      category: 'main_dish', 
+      image: null,
+      imagePath: '',
+      ingredients: [] 
+    });
+    setIngredientQuantities({});
+    setIsEditing(false);
+    setImageChanged(false);
   };
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
     
     if (name === 'image' && files?.length > 0) {
-      // For file inputs
-      if (showUpdateModal) {
-        setImageChanged(true);
-        setSelectedRow(prev => ({
-          ...prev,
-          image: files[0]  // Store the File object
-        }));
-      } else {
-        setNewDish(prev => ({
-          ...prev,
-          image: files[0]
-        }));
-      }
+      setImageChanged(true);
+      setCurrentDish(prev => ({
+        ...prev,
+        image: files[0]
+      }));
     } else {
-      // For text inputs
-      const updateState = showUpdateModal ? setSelectedRow : setNewDish;
-      updateState(prev => ({
+      setCurrentDish(prev => ({
         ...prev,
         [name]: name === 'price' 
           ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
@@ -91,80 +171,59 @@ const MainDish = () => {
     }
   };
 
-  const handleUpdateClick = (row) => {
-    // Reset image state when opening the update modal
-    setImageChanged(false);
+  const handleEditClick = (row) => {
+    const dish = row.original;
+    const quantities = {};
+    const dishIngredients = dish.ingredients || [];
     
-    setSelectedRow({
-      id: row.original.id,
-      name: row.original.name,
-      price: row.original.price.toString(),
-      imagePath: row.original.image, // Store the current image path
-      image: null // Reset the File object
+    // Fix: Make sure we're correctly accessing the ingredient ID and quantity
+    dishIngredients.forEach(ing => {
+      // Check the structure of your ingredient object and use the correct property
+      // If the ingredient object has ingredient_id or ingredient.id, use that
+      const ingredientId = ing.ingredient_id || ing.ingredient?.id || ing.id;
+      quantities[ingredientId] = ing.pivot?.quantity || ing.quantity || 0;
     });
-    setShowUpdateModal(true);
+
+    // Convert ingredients array to the expected format for currentDish
+    const formattedIngredients = dishIngredients.map(ing => {
+      const ingredientId = ing.ingredient_id || ing.ingredient?.id || ing.id;
+      return {
+        id: ingredientId,
+        quantity: ing.pivot?.quantity || ing.quantity || 0
+      };
+    });
+
+    setCurrentDish({
+      id: dish.id,
+      name: dish.name,
+      price: dish.price.toString(),
+      category: dish.category,
+      imagePath: dish.image,
+      image: null,
+      ingredients: formattedIngredients
+    });
+    
+    setIngredientQuantities(quantities);
+    setIsEditing(true);
+    setShowDishModal(true);
+    setImageChanged(false);
+
+    // Debug: Log the quantities and ingredients to help troubleshoot
+    console.log('Dish ingredients:', dishIngredients);
+    console.log('Formatted ingredients:', formattedIngredients);
+    console.log('Ingredient quantities:', quantities);
   };
 
   const handleDeleteClick = (row) => {
-    setSelectedRow(row.original);
+    setCurrentDish(row.original);
     setShowDeleteModal(true);
-  };
-
-  const handleUpdateSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    if (!selectedRow.id) {
-      setMessage('Error: No dish ID found');
-      setResponseStatus('error');
-      setShowSnackbar(true);
-      setIsSubmitting(false);
-      return;
-    }
-    
-    try {
-      const formData = new FormData();
-      formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
-      formData.append('name', selectedRow.name || '');
-      formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
-      
-      // Only append image if a new file was selected
-      if (imageChanged && selectedRow.image instanceof File) {
-        formData.append('image', selectedRow.image);
-      }
-
-      // Send the request
-      const response = await api.post(
-        `/mainDish/update/${selectedRow.id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-
-      setMessage(response.data?.message || 'Dish updated successfully');
-      setResponseStatus(response.data?.status || 'success');
-      setShowSnackbar(true);
-      setShowUpdateModal(false);
-      setKeyTrigger((prev) => prev + 1);
-      setImageChanged(false);
-    } catch (error) {
-      console.error('Update error:', error.response || error);
-      setMessage(error.response?.data?.message || 'An error occurred during update');
-      setResponseStatus(error.response?.data?.status || 'error');
-      setShowSnackbar(true);
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   const deleteDish = async () => {
     setIsSubmitting(true);
     try {
-      const response = await api.patch(`/mainDish/delete/${selectedRow.id}`);
-      setMessage(response.data?.message || 'Dish deleted successfully');
+      const response = await api.patch(`/product/disable/${currentDish.id}`);
+      setMessage('Dish deleted successfully');
       setResponseStatus(response.data?.status || 'success');
       setShowSnackbar(true);
       setShowDeleteModal(false);
@@ -181,8 +240,12 @@ const MainDish = () => {
 
   const fetchMainDish = async () => {
     try {
-      const response = await api.get('/mainDishes');
-      setData(response.data?.data || []);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'main_dish'
+        }
+      });
+      setData(response.data);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error fetching dishes');
       setResponseStatus(error.response?.data?.status || 'error');
@@ -192,8 +255,22 @@ const MainDish = () => {
     }
   };
 
+  const fetchIngredients = async () => {
+    try {
+      const response = await api.get('/ingredient/fetch');
+      setIngredients(response.data)
+    } catch (err) {
+      setResponseStatus(err.response?.data?.status);
+      setMessage(err.response?.data?.message)
+      setShowSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchMainDish();
+    fetchIngredients();
   }, [keyTrigger]);
 
   const columns = useMemo(() => [
@@ -221,7 +298,7 @@ const MainDish = () => {
       cell: ({ row }) => (
         <div className='space-x-2'>
           <button
-            onClick={() => handleUpdateClick(row)}
+            onClick={() => handleEditClick(row)}
             disabled={isSubmitting}
             className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2 disabled:opacity-50"
           >
@@ -283,7 +360,10 @@ const MainDish = () => {
         </div>
         <div className="flex justify-end ml-2">
           <button
-            onClick={() => setAddDish(true)}
+            onClick={() => {
+              resetDishForm();
+              setShowDishModal(true);
+            }}
             disabled={isSubmitting}
             className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black disabled:opacity-50"
           >
@@ -293,124 +373,136 @@ const MainDish = () => {
         </div>
       </div>
 
-      {/* Add Modal */}
-      {addDish && (
+      {/* Dish Modal (Add/Edit) */}
+      {showDishModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              ADD NEW DISH
+          <div className="bg-white max-h-[600px] min-h-[500px] px-5 pt-5 rounded-sm shadow-lg overfloy-auto scrollbar-thin">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8 pl-5">
+              {isEditing ? 'UPDATE DISH' : 'ADD NEW DISH'}
               <button 
-                onClick={() => setAddDish(false)} 
+                onClick={() => {
+                  setShowDishModal(false);
+                  resetDishForm();
+                }} 
                 disabled={isSubmitting}
-                className="text-gray-800 hover:text-gray-600 disabled:opacity-50"
+                className="text-gray-800 hover:text-gray-600 disabled:opacity-50 cursor-pointer"
               >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddMainDish} encType="multipart/form-data">
-              <label className="text-[15px] mb-2">Dish Name</label>
-              <input
-                type="text"
-                name="name"
-                value={newDish.name}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                required
-                disabled={isSubmitting}
-              />
-              <label className="text-[15px] mb-2">Price</label>
-              <input
-                type="text"
-                name="price"
-                value={newDish.price}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                required
-                disabled={isSubmitting}
-              />
-              <label className="text-[15px] mb-2">Image</label>
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
-                required
-                disabled={isSubmitting}
-              />
+            <form className="flex flex-col h-full" onSubmit={handleDishSubmit} encType="multipart/form-data">
+              <div className='flex gap-40 mb-15'>
+                <div className='flex flex-col'>
+                  <label className="text-[15px] mb-2">Dish Name</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={currentDish.name}
+                    onChange={handleInputChange}
+                    className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <label className="text-[15px] mb-2">Price</label>
+                  <input
+                    type="text"
+                    name="price"
+                    value={currentDish.price}
+                    onChange={handleInputChange}
+                    className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                    required
+                    disabled={isSubmitting}
+                  />
+                  <label className="text-[15px] mb-2">Image</label>
+                  {isEditing && currentDish.imagePath && !imageChanged && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-500">Current image: {currentDish.imagePath.split('/').pop()}</p>
+                      <p className="text-xs text-gray-400">Upload a new image to change it, or leave empty to keep current image</p>
+                    </div>
+                  )}
+                  {imageChanged && currentDish.image instanceof File && (
+                    <div className="mb-2">
+                      <p className="text-sm text-gray-500">New image selected: {currentDish.image.name}</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7 cursor-pointer"
+                    required={!isEditing}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className='w-full min-w-[350px] max-h-[300px] min-h-[300px] overflow-y-auto scrollbar-thin'>
+                  <p className='mb-10 sticky top-0 bg-white text-primary font-medium pb-5'>
+                      INGREDIENTS
+                      <span className='ml-15 text-black'>
+                        <input 
+                          type='text'
+                          className='text-[13px] border border-gray-500 px-3 py-1 rounded-sm w-[150px]'
+                          placeholder='Search...'
+                          value={ingredientSearch}
+                          onChange={(e) => setIngredientSearch(e.target.value)}
+                        />
+                      </span>
+                  </p>
+                  {ingredients
+                  .filter(i => i.name.toLowerCase().includes(ingredientSearch.toLowerCase()))
+                  .map((i) => (
+                    <div key={i.id} className='grid grid-cols-2 min-w-[150px] mb-5'>
+                      <p>{i.name}</p>
+                      <div className='w-fit flex gap-2'>
+                        <button 
+                          type='button' 
+                          onClick={() => handleDecrement(i.id)}
+                          disabled={isSubmitting || ingredientQuantities[i.id] === 0}
+                          className="cursor-pointer"
+                        >
+                          <CircleMinus size={25} className={`rounded-full ${ingredientQuantities[i.id] > 0 ? 'text-black' : 'text-gray-300'}`} />
+                        </button>
+                        <input 
+                          type='text'
+                          min="0"
+                          value={ingredientQuantities[i.id] || 0}
+                          onChange={(e) => {
+                            const newValue = parseInt(e.target.value) || 0;
+                            if (newValue > ingredientQuantities[i.id]) {
+                              handleIncrement(i.id);
+                            } else if (newValue < ingredientQuantities[i.id]) {
+                              handleDecrement(i.id);
+                            }
+                          }}
+                          className='w-[35px] text-[15px] px-3 font-medium py-1 rounded-sm'
+                          disabled={isSubmitting}
+                          readOnly
+                        />
+                        <button 
+                          type='button' 
+                          onClick={() => handleIncrement(i.id)}
+                          disabled={isSubmitting}
+                          className="cursor-pointer"
+                        >
+                          <CirclePlus size={25} className='rounded-full text-black' />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               <button 
                 type="submit" 
+                className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black"
                 disabled={isSubmitting}
-                className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black disabled:opacity-50"
               >
-                {isSubmitting ? 'ADDING...' : 'ADD NEW MAIN DISH'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Update Modal */}
-      {showUpdateModal && selectedRow && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
-            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              UPDATE MAIN DISH
-              <button 
-                onClick={() => setShowUpdateModal(false)} 
-                disabled={isSubmitting}
-                className="text-gray-800 hover:text-gray-600 disabled:opacity-50"
-              >
-                <X size={20} />
-              </button>
-            </p>
-            <form className="flex flex-col" onSubmit={handleUpdateSubmit} encType="multipart/form-data">
-              <label className="text-[15px] mb-2">Dish Name</label>
-              <input
-                type="text"
-                name="name"
-                value={selectedRow.name || ''}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                required
-                disabled={isSubmitting}
-              />
-              <label className="text-[15px] mb-2">Price</label>
-              <input
-                type="text" 
-                name="price"
-                value={selectedRow.price || ''}
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                required
-                disabled={isSubmitting}
-              />
-              <label className="text-[15px] mb-2">Image</label>
-              {selectedRow.imagePath && !imageChanged && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">Current image: {selectedRow.imagePath.split('/').pop()}</p>
-                  <p className="text-xs text-gray-400">Upload a new image to change it, or leave empty to keep current image</p>
-                </div>
-              )}
-              {imageChanged && selectedRow.image instanceof File && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">New image selected: {selectedRow.image.name}</p>
-                </div>
-              )}
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleInputChange}
-                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
-                disabled={isSubmitting}
-              />
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black disabled:opacity-50"
-              >
-                {isSubmitting ? 'UPDATING...' : 'UPDATE'}
+                {isSubmitting 
+                  ? isEditing 
+                    ? 'UPDATING...' 
+                    : 'ADDING...'
+                  : isEditing 
+                    ? 'UPDATE DISH' 
+                    : 'ADD NEW DISH'}
               </button>
             </form>
           </div>
@@ -418,7 +510,7 @@ const MainDish = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedRow && (
+      {showDeleteModal && (
       <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
         <div className="bg-white p-7 rounded-sm shadow-lg w-[350px]">
           <div className='flex justify-center w-full'>

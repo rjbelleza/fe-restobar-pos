@@ -18,7 +18,7 @@ const OthersTable = ({openSettingsModal}) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addItem, setAddItem] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newItem, setNewItem] = useState({ name: '', stock: '', category: 'others' });
+  const [newItem, setNewItem] = useState({ name: '', stock: '', category: 'item' });
   const [globalFilter, setGlobalFilter] = useState('');
   const [keyTrigger, setKeyTrigger] = useState(0);
   const [message, setMessage] = useState('');
@@ -32,6 +32,7 @@ const OthersTable = ({openSettingsModal}) => {
   const [updateItem, setUpdateItem] = useState({
     name: '',
     stock: 0,
+    category: 'item'
   });
 
   useEffect(() => {
@@ -39,6 +40,7 @@ const OthersTable = ({openSettingsModal}) => {
       setUpdateItem({
         name: selectedRow.name || '',
         stock: selectedRow.stock || 0,
+        category: selectedRow.category || ''
       });
     }
   }, [selectedRow]);
@@ -47,7 +49,7 @@ const OthersTable = ({openSettingsModal}) => {
     const { name, value } = e.target;
     setUpdateItem(prev => ({
       ...prev, 
-      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
     }));
   };
 
@@ -58,7 +60,7 @@ const OthersTable = ({openSettingsModal}) => {
             return;
         }
 
-        const response = await api.put(`/other/update/${selectedRow.id}`, updateItem);
+        const response = await api.put(`/product/update/${selectedRow.id}`, updateItem);
         setMessage(response.data?.message);
         setResponseStatus(response.data?.status);
         setShowUpdateModal(false);
@@ -85,8 +87,10 @@ const OthersTable = ({openSettingsModal}) => {
 
   const deleteOther = async () => {
     try {
-      const response = await api.patch(`/other/delete/${selectedRow.id}`);
-      setMessage(response.data?.message);
+      const response = await api.patch(`/product/disable/${selectedRow.id}`, {
+        category: 'item'
+      });
+      setFeedback(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
@@ -97,16 +101,6 @@ const OthersTable = ({openSettingsModal}) => {
       setShowSnackbar(true);
       setShowDeleteModal(false);
     }
-  };
-  
-
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
   };
 
   const handleInputChange = (e) => {
@@ -125,14 +119,13 @@ const OthersTable = ({openSettingsModal}) => {
 const handleAddSubmit = async (e) => {
   e.preventDefault();
   try {
-    const response = await api.post('/other', newItem);
-    setMessage('');
-    setFeedback('Item added successfully');
+    const response = await api.post('/product/add', newItem);
+    setFeedback(response.data?.message);
     setStatus(response.data?.status);
     setShowSnackbar(true);
     setAddItem(false);
     setKeyTrigger(prev => prev + 1);
-    setNewItem({ name: '', stock: '' , category: 'others'});
+    setNewItem({ name: '', stock: '' , category: 'item'});
   } catch (error) {
     setMessage(error.response?.data?.message);
     setResponseStatus(error.response?.data?.status);
@@ -147,8 +140,12 @@ const stockColorCode = (stock_quantity) => {
 
 const fetchOthers = async () => {
   try {
-    const response = await api.get('/others');
-    setData(response.data?.data);
+    const response = await api.get('/product/fetch', {
+        params: {
+          category: 'item'
+        }
+      });
+    setData(response.data);
     setLoading(false);
   } catch (error) {
     setMessage(error.response?.data?.message);
@@ -235,7 +232,7 @@ useEffect(() => {
 
       {showSnackbar && (
         <Snackbar 
-        message={message ? message : feedback && feedback}
+        message={feedback}
         type={responseStatus ? responseStatus : status && status}
           onClose={() => setShowSnackbar(false)}
         />
@@ -249,7 +246,7 @@ useEffect(() => {
           <Search className="text-primary absolute top-1 left-2" />
           <input
             type="text"
-            placeholder="Search ingredient by name"
+            placeholder="Search item by name"
             className="text-[13px] h-[35px] w-[205px] border border-black pl-9 pr-3 py-1 rounded-sm"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
@@ -359,7 +356,7 @@ useEffect(() => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={updateItem.stock}
                 onChange={handleUpdateChange}

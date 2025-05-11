@@ -121,6 +121,7 @@ const Beverage = () => {
       formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
       formData.append('name', selectedRow.name || '');
       formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
+      formData.append('category', 'beverage');
       
       // Only append image if a new file was selected
       if (imageChanged && selectedRow.image instanceof File) {
@@ -129,7 +130,7 @@ const Beverage = () => {
 
       // Send the request
       const response = await api.post(
-        `/beverageList/update/${selectedRow.id}`,
+        `/product/update/${selectedRow.id}`,
         formData,
         {
           headers: {
@@ -157,8 +158,8 @@ const Beverage = () => {
   const deleteBeverage = async () => {
       setIsSubmitting(true)
     try {
-      const response = await api.patch(`/beverageList/delete/${selectedRow.id}`);
-      setMessage(response.data?.message);
+      const response = await api.patch(`/product/disable/${selectedRow.id}`);
+      setMessage('Beverage deleted successfully');
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setShowDeleteModal(false);
@@ -173,8 +174,12 @@ const Beverage = () => {
 
   const fetchBeverage = async () => {
     try {
-      const response = await api.get('/beverageList');
-      setData(response.data?.data);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'beverage'
+        }
+      });
+      setData(response.data);
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
@@ -219,13 +224,6 @@ const Beverage = () => {
             >
               <PencilLine size={15} />
             </button>
-            <button
-              onClick={() => handleDeleteClick(row)}
-              disabled={isSubmitting}
-              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-            >
-              <X size={15} />
-            </button>
           </div>
       ),
       size: 20,
@@ -269,16 +267,6 @@ const Beverage = () => {
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
         />
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddBeverage(true)}
-            disabled={isSubmitting}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Beverage
-          </button>
-        </div>
       </div>
 
       {/* Add Modal */}
@@ -385,7 +373,7 @@ const Beverage = () => {
               />
               <label className="text-[15px] mb-2">Price</label>
               <input
-                type="number"
+                type="text"
                 name="price"
                 value={selectedRow.price || ''}
                 onChange={handleInputChange}

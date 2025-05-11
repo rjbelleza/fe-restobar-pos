@@ -18,7 +18,7 @@ const BeverageTable = ({openSettingsModal}) => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addBeverage, setAddBeverage] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newBeverage, setNewBeverage] = useState({ name: '', stock: '', category: 'beverages' });
+  const [newBeverage, setNewBeverage] = useState({ name: '', stock: '', category: 'beverage' });
   const [globalFilter, setGlobalFilter] = useState('');
   const [keyTrigger, setKeyTrigger] = useState(0);
   const [message, setMessage] = useState('');
@@ -30,6 +30,7 @@ const BeverageTable = ({openSettingsModal}) => {
   const [updateBeverage, setUpdateBeverage] = useState({
     name: '',
     stock: 0,
+    category: 'beverage'
   });
 
   useEffect(() => {
@@ -37,6 +38,7 @@ const BeverageTable = ({openSettingsModal}) => {
       setUpdateBeverage({
         name: selectedRow.name || '',
         stock: selectedRow.stock || 0,
+        category: selectedRow.category || ''
       });
     }
   }, [selectedRow]);
@@ -45,7 +47,7 @@ const BeverageTable = ({openSettingsModal}) => {
     const { name, value } = e.target;
     setUpdateBeverage(prev => ({
       ...prev, 
-      [name]: name === 'stock' ? (value === '' ? null : Number(value)) : value
+      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
     }));
   };
 
@@ -56,7 +58,7 @@ const BeverageTable = ({openSettingsModal}) => {
             return;
         }
 
-        const response = await api.put(`/beverage/update/${selectedRow.id}`, updateBeverage);
+        const response = await api.put(`/product/update/${selectedRow.id}`, updateBeverage);
         setMessage(response.data?.message);
         setResponseStatus(response.data?.status);
         setShowUpdateModal(false);
@@ -82,7 +84,9 @@ const BeverageTable = ({openSettingsModal}) => {
 
   const deleteBeverage = async () => {
     try {
-      const response = await api.patch(`/beverage/delete/${selectedRow.id}`);
+      const response = await api.patch(`/product/disable/${selectedRow.id}`, {
+        category: 'beverage'
+      });
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
@@ -94,15 +98,6 @@ const BeverageTable = ({openSettingsModal}) => {
       setShowSnackbar(true);
       setShowDeleteModal(false);
     }
-  };
-
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.name === selectedRow.name ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
   };
 
   const handleInputChange = (e) => {
@@ -121,13 +116,13 @@ const BeverageTable = ({openSettingsModal}) => {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/beverage', newBeverage);
+      const response = await api.post('/product/add', newBeverage);
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setAddBeverage(false);
       setKeyTrigger(prev => prev + 1);
-      setNewBeverage({ name: '', stock: '' , category: 'beverages'});
+      setNewBeverage({ name: '', stock: '' , category: 'beverage'});
     } catch (error) {
       setMessage(error.response?.data?.message);
       setResponseStatus(error.response?.data?.status);
@@ -142,12 +137,16 @@ const BeverageTable = ({openSettingsModal}) => {
 
   const fetchBeverage = async () => {
     try {
-      const response = await api.get('/beverages');
-      setData(response.data?.data);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'beverage'
+        }
+      });
+      setData(response.data);
       setLoading(false);
     } catch (error) {
-      setMessage(error.response?.data?.message);
-      setResponseStatus(error.response?.data?.status);
+      setMessage(error.response?.message);
+      setResponseStatus(error.response?.status);
       setShowSnackbar(true);
       setLoading(false);
     }
@@ -243,7 +242,7 @@ const BeverageTable = ({openSettingsModal}) => {
           <Search className="text-primary absolute top-1 left-2" />
           <input
             type="text"
-            placeholder="Search ingredient by name"
+            placeholder="Search beverage by name"
             className="text-[13px] h-[35px] w-[205px] border border-black pl-9 pr-3 py-1 rounded-sm"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
@@ -353,7 +352,7 @@ const BeverageTable = ({openSettingsModal}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={updateBeverage.stock}
                 onChange={handleUpdateChange}

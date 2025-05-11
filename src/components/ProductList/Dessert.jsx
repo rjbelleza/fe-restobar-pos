@@ -121,6 +121,7 @@ const Dessert = () => {
       formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
       formData.append('name', selectedRow.name || '');
       formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
+      formData.append('category', 'dessert');
       
       // Only append image if a new file was selected
       if (imageChanged && selectedRow.image instanceof File) {
@@ -129,7 +130,7 @@ const Dessert = () => {
 
       // Send the request
       const response = await api.post(
-        `/dessertList/update/${selectedRow.id}`,
+        `/product/update/${selectedRow.id}`,
         formData,
         {
           headers: {
@@ -157,14 +158,14 @@ const Dessert = () => {
   const deleteDessert = async () => {
     setIsSubmitting(true);
     try {
-      const response = await api.patch(`/dessertList/delete/${selectedRow.id}`);
-      setMessage(response.data?.message || 'Dessert deleted successfully');
-      setResponseStatus(response.data?.status || 'success');
+      const response = await api.patch(`/product/disable/${selectedRow.id}`);
+      setMessage('Dessert deleted successfully');
+      setResponseStatus('success');
       setShowSnackbar(true);
       setShowDeleteModal(false);
       setKeyTrigger(prev => prev + 1);
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Error dessert');
+      setMessage(error.response?.data?.message || 'Error deleting dessert');
       setResponseStatus(error.response?.data?.status || 'error');
       setShowSnackbar(true);
     } finally {
@@ -175,8 +176,12 @@ const Dessert = () => {
 
   const fetchDessert = async () => {
     try {
-      const response = await api.get('/dessertList');
-      setData(response.data?.data);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'dessert'
+        }
+      });
+      setData(response.data);
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
@@ -221,14 +226,7 @@ const Dessert = () => {
             >
               <PencilLine size={15} />
             </button>
-            <button
-              onClick={() => handleDeleteClick(row)}
-              disabled={isSubmitting}
-              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-            >
-              <X size={15} />
-            </button>
-          </div>
+        </div>
       ),
       size: 20,
     },
@@ -272,16 +270,6 @@ const Dessert = () => {
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
         />
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddDessert(true)}
-            disabled={isSubmitting}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Dessert
-          </button>
-        </div>
       </div>
 
       {/* Add Modal */}

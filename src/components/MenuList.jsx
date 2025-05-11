@@ -17,14 +17,18 @@ const MenuList = () => {
     const [keyTrigger, setKeyTrigger] = useState(0);
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [responseStatus, setResponseStatus] = useState('');
-    const [focus, setFocus] = useState('mainDish');
+    const [focus, setFocus] = useState('main_dish');
 
     useEffect(() => {
         const fetchMenuItems = async () => {
             setLoading(true);
             try {
-                const res = await api.get(`/products/${focus}`);
-                setMenuItems(res.data?.data || []);
+                const res = await api.get('/product/fetch', {
+                    params: {
+                        category: focus
+                    }
+                });
+                setMenuItems(res.data || []);
             } catch (err) {
                 setMessage(err.response?.data?.message || 'Failed to fetch menu items');
                 setResponseStatus('error');
@@ -58,13 +62,35 @@ const MenuList = () => {
     };
 
     const handleAddItem = (item) => {
+        // Check if the item is available based on the track_stock flag
+        const isAvailable = item.track_stock 
+            ? item.stock > 0 
+            : item.available_quantity > 0;
+        
+        if (!isAvailable) {
+            setMessage('Item is out of stock');
+            setResponseStatus('error');
+            setShowSnackbar(true);
+            return;
+        }
+
         const existingItem = orderItems.find(orderItem => orderItem.id === item.id);
+        
         if (existingItem) {
+            // Check quantity limits based on track_stock flag
+            const maxQuantity = item.track_stock ? item.stock : item.available_quantity;
+            
+            if (existingItem.quantity >= maxQuantity) {
+                setMessage(`Maximum quantity (${maxQuantity}) reached`);
+                setResponseStatus('error');
+                setShowSnackbar(true);
+                return;
+            }
             handleIncrement(item.id);
         } else {
             const newItem = {
                 id: item.id,
-                name: item.itemName,
+                name: item.name,
                 price: typeof item.price === 'string' ? parseFloat(item.price.replace('₱', '')) : item.price,
                 quantity: 1,
                 imagePath: item.imagePath
@@ -140,23 +166,23 @@ const MenuList = () => {
 
                 <div className="flex gap-2 px-10 mt-4">
                     <button 
-                        onClick={() => setFocus('mainDish')}
-                        className={`px-4 py-2 ${focus === 'mainDish' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                        onClick={() => setFocus('main_dish')}
+                        className={`px-4 py-2 ${focus === 'main_dish' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
                     >Value Meal
                     </button>
                     <button 
-                        onClick={() => setFocus('beverages')}
-                        className={`px-4 py-2 ${focus === 'beverages' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                        onClick={() => setFocus('beverage')}
+                        className={`px-4 py-2 ${focus === 'beverage' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
                     >Beverages
                     </button>
                     <button 
-                        onClick={() => setFocus('desserts')}
-                        className={`px-4 py-2 ${focus === 'desserts' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                        onClick={() => setFocus('dessert')}
+                        className={`px-4 py-2 ${focus === 'dessert' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
                     >Desserts
                     </button>
                     <button 
-                        onClick={() => setFocus('others')}
-                        className={`px-4 py-2 ${focus === 'others' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
+                        onClick={() => setFocus('item')}
+                        className={`px-4 py-2 ${focus === 'item' ? 'bg-primary text-white' : 'bg-secondary text-primary'} rounded-lg hover:bg-primary hover:text-white cursor-pointer`}
                     >Others
                     </button>
                 </div>

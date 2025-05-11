@@ -7,7 +7,7 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Settings, PencilLine, Eye, Trash } from 'lucide-react';
+import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from './Snackbar';
 
@@ -67,6 +67,8 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
         setResponseStatus(error.response?.data?.status);
         setShowUpdateModal(false);
         setShowSnackbar(true);
+    } finally {
+        setShowUpdateModal(false);
     }
   };
 
@@ -80,10 +82,15 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     setShowDeleteModal(true);
   };
 
+  const handleModalClose = () => {
+    setAddIngredients(false);
+    setNewIngredient({ name: '', stock: '', category: 'ingredients' });
+  };
+
   const deleteIngredient = async () => {
     try {
-      const response = await api.patch(`/ingredient/delete/${selectedRow.id}`);
-      setMessage(response.data.message);
+      const response = await api.patch(`/ingredient/disable/${selectedRow.id}`);
+      setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
@@ -112,7 +119,11 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const handleAddIngredients = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/ingredient', newIngredient);
+         const payload = {
+      ...newIngredient,
+      stock: parseFloat(newIngredient.stock || 0),
+    };
+      const response = await api.post('/ingredient/add', payload);
       setMessage(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
@@ -123,6 +134,9 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
       setResponseStatus(error.response?.data?.status);
       setMessage(error.response?.data?.message);
       setShowSnackbar(true)
+    } finally {
+      setAddIngredients(false);
+      setNewIngredient({ name: '', stock: '', category: 'ingredients' });
     }
   };
 
@@ -132,15 +146,18 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
   };
 
   const fetchIngredients = async () => {
+    setLoading(true);
     try {
-      const response = await api.get('/ingredients');
-      setData(response.data?.data);
+      const response = await api.get('/ingredient/fetch');
+      setData(response.data);
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
       setResponseStatus(error.response?.data?.status);
       setShowSnackbar(true);
       setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -263,7 +280,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD INGREDIENT
               <span className="text-gray-800 hover:text-gray-600 font-normal">
-                <button onClick={() => setAddIngredients(false)} className="cursor-pointer">
+                <button onClick={handleModalClose} className="cursor-pointer">
                   <X size={20} />
                 </button>
               </span>
@@ -344,7 +361,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
               />
               <label className="text-[15px] mb-2">Quantity</label>
               <input
-                type="number"
+                type="text"
                 name="stock"
                 value={updateIngredient.stock}
                 onChange={handleUpdateChange}
