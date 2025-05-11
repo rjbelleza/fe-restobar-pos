@@ -242,7 +242,7 @@ const BeverageTable = ({openSettingsModal}) => {
           <Search className="text-primary absolute top-1 left-2" />
           <input
             type="text"
-            placeholder="Search ingredient by name"
+            placeholder="Search beverage by name"
             className="text-[13px] h-[35px] w-[205px] border border-black pl-9 pr-3 py-1 rounded-sm"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}

@@ -90,7 +90,7 @@ const OthersTable = ({openSettingsModal}) => {
       const response = await api.patch(`/product/disable/${selectedRow.id}`, {
         category: 'item'
       });
-      setMessage(response.data?.message);
+      setFeedback(response.data?.message);
       setResponseStatus(response.data?.status);
       setShowSnackbar(true);
       setKeyTrigger(prev => prev + 1);
@@ -148,8 +148,8 @@ const fetchOthers = async () => {
     setData(response.data);
     setLoading(false);
   } catch (error) {
-    setMessage(error.response?.message);
-    setResponseStatus(error.response?.status);
+    setMessage(error.response?.data?.message);
+    setResponseStatus(error.response?.data?.status);
     setShowSnackbar(true);
     setLoading(false);
   }
@@ -232,7 +232,7 @@ useEffect(() => {
 
       {showSnackbar && (
         <Snackbar 
-        message={message ? message : feedback && feedback}
+        message={feedback}
         type={responseStatus ? responseStatus : status && status}
           onClose={() => setShowSnackbar(false)}
         />
@@ -246,7 +246,7 @@ useEffect(() => {
           <Search className="text-primary absolute top-1 left-2" />
           <input
             type="text"
-            placeholder="Search ingredient by name"
+            placeholder="Search item by name"
             className="text-[13px] h-[35px] w-[205px] border border-black pl-9 pr-3 py-1 rounded-sm"
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}

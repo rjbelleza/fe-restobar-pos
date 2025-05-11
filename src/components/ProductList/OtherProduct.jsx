@@ -121,6 +121,7 @@ const OtherProduct = () => {
       formData.append('_method', 'PUT'); // For Laravel to recognize as PUT
       formData.append('name', selectedRow.name || '');
       formData.append('price', selectedRow.price ? selectedRow.price.toString() : '0');
+      formData.append('category', 'item');
       
       // Only append image if a new file was selected
       if (imageChanged && selectedRow.image instanceof File) {
@@ -129,7 +130,7 @@ const OtherProduct = () => {
 
       // Send the request
       const response = await api.post(
-        `/itemList/update/${selectedRow.id}`,
+        `/product/update/${selectedRow.id}`,
         formData,
         {
           headers: {
@@ -175,8 +176,12 @@ const OtherProduct = () => {
 
   const fetchItems = async () => {
     try {
-      const response = await api.get('/itemList');
-      setData(response.data?.data);
+      const response = await api.get('/product/fetch', {
+        params: {
+          category: 'item'
+        }
+      });
+      setData(response.data);
       setLoading(false);
     } catch (error) {
       setMessage(error.response?.data?.message);
@@ -220,13 +225,6 @@ const OtherProduct = () => {
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
             >
               <PencilLine size={15} />
-            </button>
-            <button
-              onClick={() => handleDeleteClick(row)}
-              disabled={isSubmitting}
-              className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
-            >
-              <X size={15} />
             </button>
           </div>
       ),
@@ -272,16 +270,6 @@ const OtherProduct = () => {
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
         />
-        <div className="flex justify-end ml-2">
-          <button
-            onClick={() => setAddItem(true)}
-            disabled={isSubmitting}
-            className="flex items-center gap-2 h-[35px] bg-primary text-white font-medium px-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
-          >
-            <CirclePlus />
-            Add New Item
-          </button>
-        </div>
       </div>
 
       {/* Add Modal */}
