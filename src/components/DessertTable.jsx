@@ -45,11 +45,18 @@ const DessertTable = ({openSettingsModal}) => {
     }
   }, [selectedRow]);
 
-  const handleUpdateChange = (e) => {
+    const handleUpdateChange = (e) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    if (name === 'stock') {
+        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      }
+
     setUpdateDessert(prev => ({
-      ...prev, 
-      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
+      ...prev,
+      [name]: processedValue
     }));
   };
 
@@ -332,7 +339,7 @@ const DessertTable = ({openSettingsModal}) => {
         </div>
       )}
 
-            {/* (Update modal remains unchanged) */}
+            {/* (Update modal remains unchanged)// */}
             {showUpdateModal && selectedRow && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">

@@ -45,11 +45,18 @@ const OthersTable = ({openSettingsModal}) => {
     }
   }, [selectedRow]);
 
-  const handleUpdateChange = (e) => {
+     const handleUpdateChange = (e) => {
     const { name, value } = e.target;
+
+    let processedValue = value;
+
+    if (name === 'stock') {
+        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      }
+
     setUpdateItem(prev => ({
-      ...prev, 
-      [name]: name === 'stock' ? /^[0-9]*\.?[0-9]*$/.test(value) : value
+      ...prev,
+      [name]: processedValue
     }));
   };
 
@@ -338,7 +345,7 @@ useEffect(() => {
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
-              UPDATE INGREDIENTS
+              UPDATE ITEM
               <span className="text-gray-800 hover:text-gray-600 font-normal">
                 <button onClick={() => setShowUpdateModal(false)} className="cursor-pointer">
                   <X size={20} />
