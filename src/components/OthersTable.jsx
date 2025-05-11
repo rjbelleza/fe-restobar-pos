@@ -46,19 +46,20 @@ const OthersTable = ({openSettingsModal}) => {
   }, [selectedRow]);
 
      const handleUpdateChange = (e) => {
-    const { name, value } = e.target;
+      const { name, value } = e.target;
 
-    let processedValue = value;
+      let processedValue = value;
 
-    if (name === 'stock') {
-        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      if (name === 'stock') {
+        // Keep only digits (whole numbers)
+        processedValue = value.replace(/[^0-9]/g, '');
       }
 
-    setUpdateItem(prev => ({
-      ...prev,
-      [name]: processedValue
-    }));
-  };
+      setUpdateItem(prev => ({
+        ...prev,
+        [name]: processedValue
+      }));
+    };
 
   const handleSaveUpdate = async (e) => {
     e.preventDefault();    
@@ -110,15 +111,21 @@ const OthersTable = ({openSettingsModal}) => {
     }
   };
 
-  const handleInputChange = (e) => {
+ const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewItem(prev => ({ 
-        ...prev, [name]: name === 'stock' 
-                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-                       : value
+      setNewItem(prev => ({
+        ...prev,
+        [name]: name === 'stock'
+          ? (
+              value === '' || /^[0-9]*$/.test(value) // only whole numbers allowed
+                ? value
+                : prev[name]
+            )
+          : value
       }));
     }
   };

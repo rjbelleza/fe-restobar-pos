@@ -41,14 +41,15 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
     }
   }, [selectedRow]);
 
- const handleUpdateChange = (e) => {
+  const handleUpdateChange = (e) => {
     const { name, value } = e.target;
 
     let processedValue = value;
 
     if (name === 'stock') {
-        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
-      }
+      // Keep only digits (whole numbers)
+      processedValue = value.replace(/[^0-9]/g, '');
+    }
 
     setUpdateIngredient(prev => ({
       ...prev,
@@ -113,16 +114,23 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewIngredient(prev => ({ 
-        ...prev, [name]: name === 'stock' 
-                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-                       : value
+      setNewIngredient(prev => ({
+        ...prev,
+        [name]: name === 'stock'
+          ? (
+              value === '' || /^[0-9]*$/.test(value) // only whole numbers allowed
+                ? value
+                : prev[name]
+            )
+          : value
       }));
     }
   };
+
 
   const handleAddIngredients = async (e) => {
     e.preventDefault();

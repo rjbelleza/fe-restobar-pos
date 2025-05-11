@@ -45,20 +45,21 @@ const DessertTable = ({openSettingsModal}) => {
     }
   }, [selectedRow]);
 
-    const handleUpdateChange = (e) => {
-    const { name, value } = e.target;
+   const handleUpdateChange = (e) => {
+      const { name, value } = e.target;
 
-    let processedValue = value;
+      let processedValue = value;
 
-    if (name === 'stock') {
-        processedValue = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+      if (name === 'stock') {
+        // Keep only digits (whole numbers)
+        processedValue = value.replace(/[^0-9]/g, '');
       }
 
-    setUpdateDessert(prev => ({
-      ...prev,
-      [name]: processedValue
-    }));
-  };
+      setUpdateDessert(prev => ({
+        ...prev,
+        [name]: processedValue
+      }));
+    };
 
   const handleSaveUpdate = async (e) => {
     e.preventDefault();    
@@ -110,15 +111,21 @@ const DessertTable = ({openSettingsModal}) => {
     }
   };
 
-  const handleInputChange = (e) => {
+ const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     if (showUpdateModal) {
       setSelectedRow(prev => ({ ...prev, [name]: value }));
     } else {
-      setNewDessert(prev => ({ 
-        ...prev, [name]: name === 'stock' 
-                       ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
-                       : value
+      setNewDessert(prev => ({
+        ...prev,
+        [name]: name === 'stock'
+          ? (
+              value === '' || /^[0-9]*$/.test(value) // only whole numbers allowed
+                ? value
+                : prev[name]
+            )
+          : value
       }));
     }
   };
