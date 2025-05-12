@@ -367,17 +367,6 @@ const OtherProduct = () => {
                 disabled={isSubmitting}
               />
               <label className="text-[15px] mb-2">Image</label>
-              {selectedRow.imagePath && !imageChanged && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">Current image: {selectedRow.imagePath.split('/').pop()}</p>
-                  <p className="text-xs text-gray-400">Upload a new image to change it, or leave empty to keep current image</p>
-                </div>
-              )}
-              {imageChanged && selectedRow.image instanceof File && (
-                <div className="mb-2">
-                  <p className="text-sm text-gray-500">New image selected: {selectedRow.image.name}</p>
-                </div>
-              )}
               <input
                 type="file"
                 name="image"

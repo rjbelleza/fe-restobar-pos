@@ -30,7 +30,7 @@ const Snackbar = ({ message, type = 'info', duration = 10000, onClose }) => {
   };
 
   return (
-    <div className={`fixed top-5 left-150 flex items-start gap-3 p-4 pr-8 rounded-lg border shadow-sm max-w-xs ${colorMap[type]}`}>
+    <div className={`fixed top-5 left-150 flex items-start gap-3 p-4 pr-8 rounded-lg border shadow-sm max-w-xs z-1000 ${colorMap[type]}`}>
       <div className="mt-0.5">
         {iconMap[type]}
       </div>

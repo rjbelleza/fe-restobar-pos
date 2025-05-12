@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import api from '../api/axios';
 import Snackbar from "./Snackbar";
+import { data } from "react-router-dom";
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
@@ -188,14 +189,15 @@ const MenuList = () => {
                 </div>
 
                 <div className="w-full pb-30 px-10 py-10 overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
-                    {loading ? 'Fetching Products...' : 
-                    (<MenuCard 
+                    { loading ? 'Fetching Products...' 
+                    : menuItems.length === 0 ? 'No Products available' 
+                    : (<MenuCard 
                         menu={menuItems} 
                         onAddItem={handleAddItem}
                         onRemoveItem={handleRemoveItem}
                         trigger={orderItems}
-                     />
-                    )}
+                      />)
+                    }
                 </div>
             </div>
 
