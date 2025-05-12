@@ -3,15 +3,14 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import api from '../api/axios';
 import Snackbar from "./Snackbar";
-import { data } from "react-router-dom";
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
     const [discountPercent, setDiscountPercent] = useState(null);
     const [menuItems, setMenuItems] = useState([]);
     const [amountPaid, setAmountPaid] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('Cash');
-    const [orderType, setOrderType] = useState('Dine-in');
+    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [orderType, setOrderType] = useState('dine-in');
     const [proceedModal, setProceedModal] = useState(false);
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(true);
@@ -40,7 +39,7 @@ const MenuList = () => {
         };
     
         fetchMenuItems();
-    }, [focus]);
+    }, [focus, keyTrigger]);
 
     const calculateSubtotal = () => {
         return orderItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -132,13 +131,49 @@ const MenuList = () => {
         }
     };
 
-    const greetingTime = (e) => {
+    const handleSubmitOrder = async (e) => {
         e.preventDefault();
-        setProceedModal(true);
-        setOrderItems([]);
-        setTimeout(() => {
-            setProceedModal(false);
-        }, 2000);
+        
+        try {
+            const orderData = {
+                order_items: orderItems.map(item => ({
+                    product_id: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                })),
+                discount_percent: discountPercent || 0,
+                total_amount: total,
+                amount_paid: parseFloat(amountPaid),
+                payment_method: paymentMethod,
+                order_type: orderType,
+                change: change
+            };
+
+            const response = await api.post('/order/create', orderData);
+            
+            setMessage('Order submitted successfully!');
+            setResponseStatus('success');
+            setShowSnackbar(true);
+            
+            // Reset order form
+            setOrderItems([]);
+            setDiscountPercent(null);
+            setAmountPaid('');
+            setPaymentMethod('cash');
+            setOrderType('dine-in');
+            setKeyTrigger(prev => prev + 1);
+            
+            // Show thank you modal
+            setProceedModal(true);
+            setTimeout(() => {
+                setProceedModal(false);
+            }, 2000);
+            
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Failed to submit order');
+            setResponseStatus('error');
+            setShowSnackbar(true);
+        }
     };
 
     return (
@@ -146,7 +181,7 @@ const MenuList = () => {
 
             {showSnackbar && (
               <Snackbar 
-                message={message && message}
+                message={message}
                 type={responseStatus}
                 onClose={() => setShowSnackbar(false)}
               />
@@ -203,7 +238,7 @@ const MenuList = () => {
 
             {orderItems.length > 0 && (
                 <form
-                    onSubmit={greetingTime} 
+                    onSubmit={handleSubmitOrder} 
                     className="flex flex-col h-full w-[40%] p-3 pb-30 bg-secondary rounded-l-lg shadow-md overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
                     <h2 className="text-xl font-bold mt-3 text-[#B82132]">Current Order</h2>
 
@@ -211,7 +246,7 @@ const MenuList = () => {
                         {orderItems.map(item => (
                             <div key={`${item.id}-${item.quantity}`} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <img src={`http://localhost:8000/storage/${item.imagePath}`} alt={item.name} className="h-[52px] w-[56px] rounded" />
+                                    <img src={`http://localhost:8000/storage/${item.imagePath}`} alt={item.name} className="h-[52px] w-[56px] object-cover rounded" />
                                     <div>
                                         <p className="font-medium">{item.name}</p>
                                         <p className="text-sm font-semibold">₱{item.price.toFixed(2)}</p>
@@ -268,8 +303,8 @@ const MenuList = () => {
                             onChange={(e) => setOrderType(e.target.value)}
                             className="w-full p-2 border border-gray-800 rounded cursor-pointer"
                         >
-                            <option value="Dine-in">Dine-in</option>
-                            <option value="Take-out">Take-out</option>
+                            <option value="dine-in">Dine-in</option>
+                            <option value="take-out">Take-out</option>
                         </select>
                     </div>
 
