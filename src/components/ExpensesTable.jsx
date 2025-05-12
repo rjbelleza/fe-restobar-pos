@@ -8,71 +8,93 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { CirclePlus, Calendar, X } from 'lucide-react';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
 
 const ExpensesTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [addExpense, setAddExpense] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null);
   const [newExpense, setNewExpense] = useState({ 
     description: '', 
     date: new Date().toISOString().split('T')[0], // Default to current date
-    time: new Date().toTimeString().substring(0, 5) // Default to current time (HH:MM)
+    time: new Date().toTimeString().substring(0, 5),
+    total_amount: '' // Default to current time (HH:MM)
   });
   const [globalFilter, setGlobalFilter] = useState('');
   const [dateRangeModal, setDateRangeModal] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-
-  const handleUpdateSubmit = (e) => {
-    e.preventDefault();
-    const updatedData = data.map(item =>
-      item.description === selectedRow.description ? selectedRow : item
-    );
-    setData(updatedData);
-    setShowUpdateModal(false);
-  };
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [keyTrigger, setKeyTrigger] = useState(0);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const currentDateTime = new Date();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (showUpdateModal) {
-      setSelectedRow(prev => ({ ...prev, [name]: value }));
-    } else {
-      setNewExpense(prev => ({ ...prev, [name]: value }));
+    setNewExpense(prev => ({
+      ...prev, 
+      [name]: name === 'total_amount' 
+          ? value === '' || /^[0-9]*\.?[0-9]*$/.test(value) ? value : prev[name] 
+          : value
+    }));
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await api.post('/expenses/create', newExpense);
+      setAddExpense(false);
+      setKeyTrigger(prev => prev + 1);
+    } catch (err) {
+      setMessage('Error adding expenses');
+      setResponseStatus('error');
+      setShowSnackbar(true);
+    } finally {
+      setNewExpense({ 
+        description: '', 
+        date: currentDateTime.toISOString().split('T')[0],
+        time: currentDateTime.toTimeString().substring(0, 5),
+        total_amount: ''
+      });
     }
   };
 
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    const currentDateTime = new Date();
-    const newEntry = {
-      description: newExpense.description,
-      dateTime: `${newExpense.date} ${newExpense.time || currentDateTime.toTimeString().substring(0, 5)}`,
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddExpense(false);   
-    setNewExpense({ 
-      description: '', 
-      date: currentDateTime.toISOString().split('T')[0],
-      time: currentDateTime.toTimeString().substring(0, 5)
-    });
-  };
-
   useEffect(() => {
-    fetch('/data/expenses.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    const fetchExpenses = async () => {
+      try {
+        const res = await api.get('/expenses/fetch', {
+          params: {
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize
+          }
+        });
+        setData(res.data?.data);
+        setPageCount(res.data?.last_page || 0);
+        setTotalRecords(res.data?.total || 0);
+      } catch (err) { 
+        setMessage('Error fetching expenses');
+        setResponseStatus('error');
+        setShowSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchExpenses();
+  }, [keyTrigger,pagination.pageIndex, pagination.pageSize]);
 
   const columns = useMemo(
     () => [
       {
         id: 'rowNumber',
         header: '#',
-        cell: ({ row }) => row.index + 1,
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
         accessorFn: (row, index) => index + 1,
         size: 50,
       },
@@ -83,24 +105,26 @@ const ExpensesTable = () => {
         size: 190,
       },
       {
-        accessorKey: 'totalAmount',
+        accessorKey: 'total_amount',
         header: 'Total Amount',
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info => `₱ ${Number(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
-        accessorKey: 'dateTime',
+        accessorKey: 'created_at',
         header: 'Date & Time',
         cell: info => info.getValue(),
         size: 160,
       },
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
       pagination,
@@ -117,6 +141,15 @@ const ExpensesTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
+
+      {showSnackbar && (
+        <Snackbar 
+          message={message && message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
@@ -222,6 +255,15 @@ const ExpensesTable = () => {
                 className="w-full text-[17px] border border-gray-500 px-3 py-1 rounded-sm mb-7"
                 required
               />
+              <label className="text-[15px] mb-2">Amount</label>
+              <input
+                type="text"
+                name="total_amount"
+                value={newExpense.total_amount}
+                onChange={handleInputChange}
+                className="w-full text-[17px] border border-gray-500 px-3 py-1 rounded-sm mb-7"
+                required
+              />
               
               <div className="flex gap-4 mb-7">
                 <div className="flex flex-col">
@@ -259,7 +301,7 @@ const ExpensesTable = () => {
 
 
       {/* Table */}
-      <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
+      <div className="min-h-[450px] max-h-[450px] overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -319,7 +361,7 @@ const ExpensesTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? 'Fetching expenses...' : 'No expenses found'}
                 </td>
               </tr>
             )}
@@ -358,10 +400,10 @@ const ExpensesTable = () => {
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) *
                   table.getState().pagination.pageSize,
-                data.length
+                totalRecords
               )}
             </span>{' '}
-            of <span className="font-medium">{data.length}</span> results
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

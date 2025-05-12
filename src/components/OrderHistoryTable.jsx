@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-table';
 import { X, Eye } from 'lucide-react';
 import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
 
 const OrderHistoryTable = () => {
   const [data, setData] = useState([]);
@@ -21,6 +22,8 @@ const OrderHistoryTable = () => {
   const [responseStatus, setResponseStatus] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
@@ -35,8 +38,16 @@ const OrderHistoryTable = () => {
   useEffect(() => {
     const fetchSales = async () => {
       try {
-        const res = await api.get('/sales/fetch');
-        setData(res.data?.sales?.data)
+        setLoading(true);
+        const res = await api.get('/sales/fetch', {
+          params: {
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize
+          }
+        });
+        setData(res.data?.sales?.data || []);
+        setPageCount(res.data?.sales?.last_page || 0);
+        setTotalRecords(res.data?.sales?.total || 0);
       } catch (err) {
         setMessage('Error fetching records');
         setResponseStatus('error');
@@ -46,33 +57,33 @@ const OrderHistoryTable = () => {
       }
     };
     fetchSales();
-  }, []);
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   const columns = useMemo(
     () => [
       {
         id: 'rowNumber',
         header: '#',
-        cell: ({ row }) => row.index + 1,
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
         accessorFn: (row, index) => index + 1,
         size: 50,
       },
       { 
         accessorKey: 'subtotal',
         header: 'Subtotal',
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
         accessorKey: 'discount',
         header: 'Discount',
-        cell: info => `₱ ${info.getValue()}`,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
         accessorKey: 'total_amount',
         header: 'Total Amount',
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
@@ -90,13 +101,13 @@ const OrderHistoryTable = () => {
       {
         accessorKey: 'amount_paid',
         header: 'Amount Paid',  
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
         accessorKey: 'change',
         header: 'Change',
-        cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
@@ -119,12 +130,14 @@ const OrderHistoryTable = () => {
         size: 20,
       },
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
   const table = useReactTable({
     data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
       pagination,
@@ -175,9 +188,9 @@ const OrderHistoryTable = () => {
                   {selectedRow.sale_items.map((s) => (
                       <tr key={s.id} className='text-[13px]'>
                         <td className='px-3 py-2 border-b border-gray-200'>{s.product.name}</td>
-                        <td className='px-3 py-2 border-b border-gray-200'>{s.product.price}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{parseFloat(s.product.price).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         <td className='px-3 py-2 border-b border-gray-200'>{s.quantity}</td>
-                        <td className='px-3 py-2 border-b border-gray-200'>{s.total}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{parseFloat(s.total).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -187,7 +200,7 @@ const OrderHistoryTable = () => {
       )}
 
       {/* Table */}
-      <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
+      <div className="min-h-[500px] max-h-[500px] overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -286,10 +299,10 @@ const OrderHistoryTable = () => {
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) *
                   table.getState().pagination.pageSize,
-                data.length
+                totalRecords
               )}
             </span>{' '}
-            of <span className="font-medium">{data.length}</span> results
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

@@ -8,7 +8,8 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { Calendar, X, Eye } from 'lucide-react';
-import { parseISO, isSameDay } from 'date-fns';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
 
 const SalesTable = () => {
   const [data, setData] = useState([]);
@@ -17,10 +18,15 @@ const SalesTable = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [searchDate, setSearchDate] = useState('');
   const [dateRangeModal, setDateRangeModal] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const handleViewClick = (row) => {
     setSelectedRow(row.original);
@@ -39,38 +45,60 @@ const SalesTable = () => {
     }
   };
 
+  function capitalize(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
   useEffect(() => {
-    fetch('/data/salesList.json')
-      .then((response) => response.json())
-      .then((jsonData) => setData(jsonData))
-      .catch((error) => console.error('Error fetching data:', error));
-  }, []);
+    const fetchSales = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/sales/fetch', {
+          params: {
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize
+          }
+        });
+        setData(res.data?.sales?.data || []);
+        setPageCount(res.data?.sales?.last_page || 0);
+        setTotalRecords(res.data?.sales?.total || 0);
+      } catch (err) {
+        setMessage('Error fetching records');
+        setResponseStatus('error');
+        setShowSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSales();
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   const columns = useMemo(
     () => [
       {
         id: 'rowNumber',
         header: '#',
-        cell: ({ row }) => row.index + 1,
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
         accessorFn: (row, index) => index + 1,
         size: 50,
       },
       {
         accessorKey: 'order_type',
         header: 'Order Type',
-        cell: (info) => info.getValue(),
+        cell: (info) => capitalize(info.getValue()),
         size: 190,
       },
       {
         accessorKey: 'total_amount',
         header: 'Total Amount',
         cell: (info) => (
-          <p className="font-medium">₱{info.getValue().toFixed(2)}</p>
+          <p className="font-medium">₱ {parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         ),
         size: 160,
       },
       {
-        accessorKey: 'dateTime',
+        accessorKey: 'created_at',
         header: 'Date & Time',
         cell: (info) => info.getValue(),
         size: 190,
@@ -81,27 +109,22 @@ const SalesTable = () => {
         cell: ({ row }) => (
           <button
             onClick={() => handleViewClick(row)}
-            className="w-fit text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-3 py-2"
+            className="w-fit text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
           >
-            <Eye size={15} />
+            <Eye size={20} />
           </button>
         ),
         size: 20,
       },
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
-  const filteredData = useMemo(() => {
-    return data.filter(item => {
-      const matchesDate = searchDate ? isSameDay(parseISO(item.dateTime), new Date(searchDate)) : true;
-      return matchesDate;
-    });
-  }, [data, searchDate]);
-
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
       pagination,
@@ -118,6 +141,15 @@ const SalesTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
+
+      {showSnackbar && (
+        <Snackbar 
+          message={message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
@@ -248,7 +280,7 @@ const SalesTable = () => {
       )}
 
       {/* Table */}
-      <div className="h-full overflow-auto rounded-lg border border-gray-200">
+      <div className="min-h-[450px] max-h-[450px] overflow-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -305,7 +337,7 @@ const SalesTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? 'Fetching records...' : 'No records found'}
                 </td>
               </tr>
             )}
@@ -333,24 +365,21 @@ const SalesTable = () => {
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p className="text-sm text-gray-700">
-            {table.getRowModel().rows.length > 0 ? (
-              <>
-                Showing{' '}
-                <span className="font-medium">
-                  {pagination.pageIndex * pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (pagination.pageIndex + 1) * pagination.pageSize,
-                    filteredData.length
-                  )}
-                </span>{' '}
-                of <span className="font-medium">{filteredData.length}</span> results
-              </>
-            ) : (
-              'No records to show'
-            )}
+            Showing{' '}
+            <span className="font-medium">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+            </span>{' '}
+            to{' '}
+            <span className="font-medium">
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                totalRecords
+              )}
+            </span>{' '}
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

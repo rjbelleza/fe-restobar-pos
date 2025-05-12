@@ -254,11 +254,13 @@ const MenuList = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => handleDecrement(item.id)}
                                         className="bg-gray-200 w-6 h-6 rounded-full flex items-center justify-center text-lg font-bold cursor-pointer hover:bg-gray-300"
                                     >-</button>
                                     <span className="font-medium">{item.quantity}</span>
                                     <button
+                                        type="button"
                                         onClick={() => handleIncrement(item.id)}
                                         className="bg-gray-200 w-6 h-6 rounded-full flex items-center justify-center text-lg font-bold cursor-pointer hover:bg-gray-300"
                                     >+</button>
@@ -316,8 +318,8 @@ const MenuList = () => {
                             onChange={(e) => setPaymentMethod(e.target.value)}
                             className="w-full p-2 border border-gray-800 rounded cursor-pointer"
                         >
-                            <option value="Cash">Cash</option>
-                            <option value="GCash">GCash</option>
+                            <option value="cash">Cash</option>
+                            <option value="gcash">GCash</option>
                         </select>
                     </div>
 
