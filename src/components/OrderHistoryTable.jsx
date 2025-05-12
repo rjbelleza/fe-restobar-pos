@@ -7,7 +7,8 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table';
-import { CirclePlus, Search, X, Eye } from 'lucide-react';
+import { X, Eye } from 'lucide-react';
+import api from '../api/axios';
 
 const OrderHistoryTable = () => {
   const [data, setData] = useState([]);
@@ -15,34 +16,36 @@ const OrderHistoryTable = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
-  const [newIngredient, setNewIngredient] = useState({ name: '', stock: '' });
   const [globalFilter, setGlobalFilter] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (showUpdateModal) {
-      setSelectedRow(prev => ({ ...prev, [name]: value }));
-    } else {
-      setNewIngredient(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const stockColorCode = (stock_quantity) => {
-    if (stock_quantity <= 25) return 'bg-red-500';
-    else if (stock_quantity <= 50) return 'bg-yellow-500';
-    else return 'bg-green-500';
-  };
+  function capitalize(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 
   useEffect(() => {
-    fetch('/data/orderHistory.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
+    const fetchSales = async () => {
+      try {
+        const res = await api.get('/sales/fetch');
+        setData(res.data?.sales?.data)
+      } catch (err) {
+        setMessage('Error fetching records');
+        setResponseStatus('error');
+        setShowSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSales();
   }, []);
 
   const columns = useMemo(
@@ -55,7 +58,7 @@ const OrderHistoryTable = () => {
         size: 50,
       },
       { 
-        accessorKey: 'subTotal',
+        accessorKey: 'subtotal',
         header: 'Subtotal',
         cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
@@ -63,29 +66,29 @@ const OrderHistoryTable = () => {
       {
         accessorKey: 'discount',
         header: 'Discount',
-        cell: info => `${info.getValue()}%`,
+        cell: info => `₱ ${info.getValue()}`,
         size: 190,
       },
       {
-        accessorKey: 'totalAmount',
+        accessorKey: 'total_amount',
         header: 'Total Amount',
         cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
       },
       {
-        accessorKey: 'orderType',
+        accessorKey: 'order_type',
         header: 'Order Type',
-        cell: info => info.getValue(),
+        cell: info => capitalize(info.getValue()),
         size: 190,
       },
       {
-        accessorKey: 'paymentMethod',
+        accessorKey: 'payment_method',
         header: 'Payment Method',
-        cell: info => info.getValue(),
+        cell: info => capitalize(info.getValue()),
         size: 190,
       },
       {
-        accessorKey: 'amountPaid',
+        accessorKey: 'amount_paid',
         header: 'Amount Paid',  
         cell: info => `₱ ${info.getValue().toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 190,
@@ -97,7 +100,7 @@ const OrderHistoryTable = () => {
         size: 190,
       },
       {
-        accessorKey: 'dateTime',
+        accessorKey: 'created_at',
         header: 'Date & Time',
         cell: info => info.getValue(),
         size: 190,
@@ -139,6 +142,14 @@ const OrderHistoryTable = () => {
   return (
     <div className="h-[455px] w-full p-1">
 
+      {showSnackbar && (
+          <Snackbar 
+            message={message}
+            type={responseStatus}
+            onClose={() => setShowSnackbar(false)}
+          />
+        )}
+
       {/* View Modal */}
       {showUpdateModal && selectedRow && (
         <div className="fixed inset-0 flex items-center justify-center z-1000" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
@@ -161,12 +172,12 @@ const OrderHistoryTable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {selectedRow.products.map((products) => (
-                      <tr key={products.id} className='text-[13px]'>
-                        <td className='px-3 py-2 border-b border-gray-200'>{products.name}</td>
-                        <td className='px-3 py-2 border-b border-gray-200'>{products.price.toFixed(2)}</td>
-                        <td className='px-3 py-2 border-b border-gray-200'>{products.quantity}</td>
-                        <td className='px-3 py-2 border-b border-gray-200'>{products.price * products.quantity}</td>
+                  {selectedRow.sale_items.map((s) => (
+                      <tr key={s.id} className='text-[13px]'>
+                        <td className='px-3 py-2 border-b border-gray-200'>{s.product.name}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{s.product.price}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{s.quantity}</td>
+                        <td className='px-3 py-2 border-b border-gray-200'>{s.total}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -236,7 +247,7 @@ const OrderHistoryTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? 'Fetching records...' : 'No records found'}
                 </td>
               </tr>
             )}
