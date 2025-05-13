@@ -7,10 +7,10 @@ const Card = ({ category, value, color}) => {
         >
             <div className="absolute flex flex-col gap-2 w-1/2 h-full justify-center items-center">
                 <div className="w-[200px]"></div>
-                <p className="font-medium w-fit px-2 py-1 rounded-sm text-[13px] text-white"
+                <div className="font-medium w-fit px-2 py-1 rounded-sm text-[13px] text-white"
                 style={{backgroundColor: color}}
-                >{category}</p>
-                <p className="text-[25px] font-medium text-primary">{value}</p>
+                >{category}</div>
+                <div className="text-[25px] font-medium text-primary">{value}</div>
             </div>
         </div>
     );

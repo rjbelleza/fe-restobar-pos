@@ -1,4 +1,3 @@
-import React from 'react';
 import Header from '../layouts/Header';
 import AdminSidemenu from '../layouts/AdminSidemenu';
 import Breadcrumb from '../components/Breadcrumb';
@@ -6,40 +5,97 @@ import Card from '../components/Card';
 import ColumnChart from '../components/ColumnChart';
 import Footer from '../layouts/Footer'; 
 import { Calendar } from 'lucide-react';
+import Snackbar from '../components/Snackbar';
+import ComponentLoading from '../components/ComponentLoading';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
 
 
 const AdminDashboard = () => {
+   const [range, setRange] = useState('last_day');
+    const [summary, setSummary] = useState([]);
+    const [showSnackbar, setShowSnackbar] = useState(false);
+    const [message, setMessage] = useState('');
+    const [responseStatus, setResponseStatus] = useState('');
+    const [loading, setLoading] = useState(true);
+    
+    const fetchSummaryByRange = async () => {
+        try {
+          const response = await api.get('/summary/fetch', {
+            params: { range: range }
+          });
+          setSummary(response.data?.data);
+        } catch (err) {
+          setMessage(err.response?.data?.message || 'Something went wrong');
+          setResponseStatus(err.response?.data?.status || 'error');
+          setShowSnackbar(true);
+        } finally {
+          setLoading(false);
+        }
+    };
+
+     const formatCurrency = (value) => {
+        if(loading) {
+            return <ComponentLoading />
+        }
+        if(isNaN(value)) {
+            return  <ComponentLoading />
+        }
+        return `₱${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    };
+
+    useEffect(() => {
+        setLoading(true);
+        fetchSummaryByRange();
+    }, [range]);
 
   return (
     <div className="h-screen w-screen flex flex-col gap-1 overflow-hidden">
+
+      {showSnackbar && (
+            <Snackbar 
+            message={message && message}
+            type={responseStatus}
+            onClose={() => setShowSnackbar(false)}
+            />
+        )}
+
       <Header />
       <div className="flex w-full h-full gap-3">
         <AdminSidemenu />
         <div className="flex flex-col gap-5 w-full h-fit pr-[10px] mt-2">
           <Breadcrumb />
           <div className="grid grid-cols-4 w-full px-5 gap-5 mb-3">
-              <button className="flex items-center justify-center gap-2 bg-secondary focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer">
+              <button 
+                onClick={() => setRange('last_day')}
+                className={`flex items-center justify-center gap-2 ${range === 'last_day' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Day
               </button>
-              <button className="flex items-center justify-center gap-2 bg-secondary focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer">
+              <button 
+                onClick={() => setRange('last_week')}
+                className={`flex items-center justify-center gap-2 ${range === 'last_week' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Week
               </button>
-              <button className="flex items-center justify-center gap-2 bg-secondary focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer">
+              <button 
+                onClick={() => setRange('last_month')}
+                className={`flex items-center justify-center gap-2 ${range === 'last_month' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Month
               </button>
-              <button className="flex items-center justify-center gap-2 bg-secondary focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer">
+              <button 
+                  onClick={() => setRange('last_year')}
+                  className={`flex items-center justify-center gap-2 ${range === 'last_year' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Year
               </button>
           </div>
           <div className="flex justify-between h-full w-full gap-4">
             <ColumnChart />
             <div className='grid grid-rows-3 gap-4 w-full px-5'>  
-                <Card category="Current Sales" value="₱30,000.00" color="#B82132" />
-                <Card category="Current Expenses" value="₱20,000.00" color="#B82132" />
-                <Card category="Net Profit" value="₱50,000.00" color="#B82132" />
+                <Card category="Current Sales" value={formatCurrency(summary.total_sales)} color="#B82132" />
+                <Card category="Current Expenses" value={formatCurrency(summary.total_expenses)} color="#B82132" />
+                <Card category="Net Profit" value={formatCurrency(summary.net_profit)} color="#B82132" />
             </div>
           </div>
-          <Footer />
+          <Footer />  
         </div>
       </div>
     </div>
