@@ -7,26 +7,54 @@ import {
   getPaginationRowModel,
   flexRender,
 } from '@tanstack/react-table'; 
-import { Calendar, X } from 'lucide-react';
+import { Calendar, X, Eye } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from '../components/Snackbar';
 import Loading from '../components/Loading';
 
 const SalesReportTable = () => {
   const [data, setData] = useState([]);
+  const [totalSales, setTotalSales] = useState(0);
   const [sorting, setSorting] = useState([]);
-  const [globalFilter, setGlobalFilter] = useState('');
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [dateRangeModal, setDateRangeModal] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState('');
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [responseStatus, setResponseStatus] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [pageCount, setPageCount] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [summary, setSummary] = useState({ total_sales: 0 });
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [dateRangeModal, setDateRangeModal] = useState('');
+  const [summary, setSummary] = useState(0);
+
+   const handleViewClick = (row) => {
+    setSelectedRow(row.original);
+    setShowViewModal(true);
+  };
+
+  function capitalize(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  const fetchTotalSales = async () => {
+      try {
+        const response = await api.get('/summary/fetch', {
+          params: { range: 'last_year' }
+        });
+        setTotalSales(response.data?.data?.total_sales);
+      } catch (err) {
+        setMessage(err.response?.data?.message || 'Something went wrong');
+        setResponseStatus(err.response?.data?.status || 'error');
+        setShowSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+  };
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -35,17 +63,13 @@ const SalesReportTable = () => {
         const res = await api.get('/sales/fetch', {
           params: {
             page: pagination.pageIndex + 1,
-            per_page: pagination.pageSize,
+            per_page: pagination.pageSize
           }
         });
-        
-        // Flatten all sale_items from all sales into a single array
-        const allSaleItems = res.data?.sales?.data?.flatMap(sale => sale.sale_items) || [];
-        
-        setData(allSaleItems);
+        setData(res.data?.sales?.data || []);
         setPageCount(res.data?.sales?.last_page || 0);
         setTotalRecords(res.data?.sales?.total || 0);
-        setSummary(res.data?.summary || { total_sales: 0 });
+        setSummary(res.data?.summary);
       } catch (err) {
         setMessage('Error fetching records');
         setResponseStatus('error');
@@ -55,7 +79,8 @@ const SalesReportTable = () => {
       }
     };
     fetchSales();
-  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
+    fetchTotalSales();
+  }, [pagination.pageIndex, pagination.pageSize]);
 
   const columns = useMemo(
     () => [
@@ -66,30 +91,67 @@ const SalesReportTable = () => {
         accessorFn: (row, index) => index + 1,
         size: 50,
       },
-      {
-        accessorKey: 'price',
-        header: 'Price',
-        cell: info => "₱" + info.getValue(),
-        size: 160,
+      { 
+        accessorKey: 'subtotal',
+        header: 'Subtotal',
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
       },
       {
-        accessorKey: 'quantity',
-        header: 'Quantity',
-        cell: info => info.getValue(),
-        size: 160,
+        accessorKey: 'discount',
+        header: 'Discount',
+        cell: info =>  ` ${info.getValue()}%`,
+        size: 190,
       },
       {
-        accessorKey: 'total',
+        accessorKey: 'total_amount',
         header: 'Total Amount',
-        cell: info => "₱" + info.getValue(),
-        size: 160,
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
+      },
+      {
+        accessorKey: 'order_type',
+        header: 'Order Type',
+        cell: info => capitalize(info.getValue()),
+        size: 190,
+      },
+      {
+        accessorKey: 'payment_method',
+        header: 'Payment Method',
+        cell: info => capitalize(info.getValue()),
+        size: 190,
+      },
+      {
+        accessorKey: 'amount_paid',
+        header: 'Amount Paid',  
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
+      },
+      {
+        accessorKey: 'change',
+        header: 'Change',
+        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        size: 190,
       },
       {
         accessorKey: 'created_at',
-        header: 'Date',
+        header: 'Date & Time',
         cell: info => info.getValue(),
-        size: 160,
-      }
+        size: 190,
+      },
+      {
+        id: 'actions',
+        header: 'Action',
+        cell: ({ row }) => (
+          <button
+            onClick={() => handleViewClick(row)}
+            className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-2 py-2"
+          >
+            <Eye size={20} />
+          </button>
+        ),
+        size: 20,
+      },
     ],
     [pagination.pageIndex, pagination.pageSize]
   );
@@ -204,6 +266,61 @@ const SalesReportTable = () => {
         </div>
       )}
 
+      {/* View Modal */}
+      {showViewModal && selectedRow && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-1000"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+        >
+          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+            <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
+              VIEW ORDER DETAILS
+              <span className="text-gray-800 hover:text-gray-600 font-normal">
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="cursor-pointer"
+                >
+                  <X size={20} />
+                </button>
+              </span>
+            </p>
+            <form className="flex flex-col">
+              <label className="text-[15px] mb-2">Order Type</label>
+              <input
+                type="text"
+                name="order_type"
+                value={capitalize(selectedRow.order_type)}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                readOnly
+              />
+              <label className="text-[15px] mb-2">Total Amount</label>
+              <input
+                type="text"
+                name="total_amount"
+                value={`₱ ${selectedRow.total_amount}`}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                readOnly
+              />
+              <label className="text-[15px] mb-2">Date & Time</label>
+              <input
+                type="text"
+                name="dateTime"
+                value={selectedRow.created_at}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                readOnly
+              />
+              <button
+                type="button"
+                onClick={() => setShowViewModal(false)}
+                className="bg-primary text-white font-medium py-3 rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+              >
+                CLOSE
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
@@ -276,9 +393,8 @@ const SalesReportTable = () => {
                   Total Sales
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{summary.total_sales.toFixed(2)}
+                  ₱{totalSales}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={1}></td>
               </tr>
             )}
           </tbody>
