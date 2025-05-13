@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Chart from 'react-apexcharts';
+import api from '../api/axios';
+import ComponentLoading from './ComponentLoading';
+import Loading from '../components/Loading';
 
-const ColumnChart = () => {
+const ColumnChart = ({ range }) => {
   const [chartData, setChartData] = useState({
     sales: [],
     expenses: [],
@@ -15,33 +18,33 @@ const ColumnChart = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/data/sales.json'); // Changed path to be served from public folder
+        const response = await api.get('/graph-data/fetch', {
+          params: { range: range }
+        });
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.data || !response.data.status === 'success') {
+          throw new Error('Invalid data format received');
         }
-        
-        const data = await response.json();
         
         // Transform the data for the chart
         const transformedData = {
-          sales: data.monthlyData.map(item => item.sales),
-          expenses: data.monthlyData.map(item => item.expenses),
-          months: data.monthlyData.map(item => item.month),
-          lastUpdated: new Date(data.updatedAt).toLocaleString()
+          sales: response.data.monthlyData.map(item => item.sales),
+          expenses: response.data.monthlyData.map(item => item.expenses),
+          months: response.data.monthlyData.map(item => item.label),
+          lastUpdated: response.data.updatedAt
         };
         
         setChartData(transformedData);
         setLoading(false);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Error fetching chart data');
         setLoading(false);
-        console.error('Error fetching data:', err);
+        console.error('Error fetching chart data:', err);
       }
     };
 
     fetchData();
-  }, []);
+  }, [range]); // Re-fetch when range changes
 
   const options = {
     series: [{
@@ -193,25 +196,29 @@ const ColumnChart = () => {
 
   if (loading) {
     return (
-      <div className="chart-container">
+      <div className="chart-container min-w-[980px]">
         <h2>Monthly Sales & Expenses</h2>
-        <div className="loading-message">Loading data...</div>
+        <div className="loading-message" style={{ width: '980px', height: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Loading />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="chart-container">
+      <div className="chart-container min-w-[980px]">
         <h2>Monthly Sales & Expenses</h2>
-        <div className="error-message">Error: {error}</div>
+        <div className="error-message" style={{ width: '980px', height: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          Error: {error}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="chart-container">
-      <h2>Monthly Sales & Expenses</h2>
+    <div className="chart-container min-w-[980px]">
+      <h2>Sales & Expenses</h2>
       <div className="chart-wrapper">
         <Chart 
           options={options} 

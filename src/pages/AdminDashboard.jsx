@@ -68,27 +68,27 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-4 w-full px-5 gap-5 mb-3">
               <button 
                 onClick={() => setRange('last_day')}
-                className={`flex items-center justify-center gap-2 ${range === 'last_day' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
+                className={`flex items-center justify-center gap-2 ${range === 'last_day' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Day
               </button>
               <button 
                 onClick={() => setRange('last_week')}
-                className={`flex items-center justify-center gap-2 ${range === 'last_week' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
+                className={`flex items-center justify-center gap-2 ${range === 'last_week' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Week
               </button>
               <button 
                 onClick={() => setRange('last_month')}
-                className={`flex items-center justify-center gap-2 ${range === 'last_month' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
+                className={`flex items-center justify-center gap-2 ${range === 'last_month' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Month
               </button>
               <button 
                   onClick={() => setRange('last_year')}
-                  className={`flex items-center justify-center gap-2 ${range === 'last_year' ? 'bg-mustard' : 'bg-secondary'} focus:bg-primary py-2 focus:text-white hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
+                  className={`flex items-center justify-center gap-2 ${range === 'last_year' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
                   <Calendar size={15} /> Last Year
               </button>
           </div>
           <div className="flex justify-between h-full w-full gap-4">
-            <ColumnChart />
+            <ColumnChart range={range} />
             <div className='grid grid-rows-3 gap-4 w-full px-5'>  
                 <Card category="Current Sales" value={formatCurrency(summary.total_sales)} color="#B82132" />
                 <Card category="Current Expenses" value={formatCurrency(summary.total_expenses)} color="#B82132" />
