@@ -8,35 +8,68 @@ import {
   flexRender,
 } from '@tanstack/react-table'; 
 import { Calendar, X } from 'lucide-react';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const SalesReportTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState('');
-  const [searchDate, setSearchDate] = useState('');
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [dateRangeModal, setDateRangeModal] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [summary, setSummary] = useState({ total_sales: 0 });
 
   useEffect(() => {
-    fetch('/data/salesReport.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    const fetchSales = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/sales/fetch', {
+          params: {
+            page: pagination.pageIndex + 1,
+            per_page: pagination.pageSize,
+          }
+        });
+        
+        // Flatten all sale_items from all sales into a single array
+        const allSaleItems = res.data?.sales?.data?.flatMap(sale => sale.sale_items) || [];
+        
+        setData(allSaleItems);
+        setPageCount(res.data?.sales?.last_page || 0);
+        setTotalRecords(res.data?.sales?.total || 0);
+        setSummary(res.data?.summary || { total_sales: 0 });
+      } catch (err) {
+        setMessage('Error fetching records');
+        setResponseStatus('error');
+        setShowSnackbar(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSales();
+  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
 
   const columns = useMemo(
     () => [
       {
-        accessorKey: 'product_name',
-        header: 'Product Name',
-        cell: info => info.getValue(),
-        size: 190,
+        id: 'rowNumber',
+        header: '#',
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
+        accessorFn: (row, index) => index + 1,
+        size: 50,
       },
       {
         accessorKey: 'price',
         header: 'Price',
-        cell: info => "₱" + info.getValue().toFixed(2),
+        cell: info => "₱" + info.getValue(),
         size: 160,
       },
       {
@@ -46,80 +79,69 @@ const SalesReportTable = () => {
         size: 160,
       },
       {
-        accessorKey: 'totalAmount',
+        accessorKey: 'total',
         header: 'Total Amount',
-        cell: info => "₱" + info.getValue().toFixed(2),
+        cell: info => "₱" + info.getValue(),
         size: 160,
       },
       {
-        accessorKey: 'date',
+        accessorKey: 'created_at',
         header: 'Date',
         cell: info => info.getValue(),
         size: 160,
       }
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
-  // Filter data by date and calculate total sales
-  const filteredData = useMemo(() => {
-    if (!searchDate) return data;
-    
-    return data.filter(item => {
-      try {
-        // Handle different date formats
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return false; // Skip invalid dates
-        
-        const formattedItemDate = itemDate.toISOString().split('T')[0];
-        return formattedItemDate === searchDate;
-      } catch (e) {
-        console.warn('Invalid date format for item:', item);
-        return false;
-      }
-    });
-  }, [data, searchDate]);
-
-  const totalSalesAmount = useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
-  }, [filteredData]);
-
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
+      pagination,
       globalFilter,
     },
     onSortingChange: setSorting,
+    onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
   });
+
+  const handleDateRangeSubmit = () => {
+    setPagination({ ...pagination, pageIndex: 0 }); // Reset to first page when changing date range
+    setDateRangeModal(false);
+  };
 
   return (
     <div className="h-[455px] w-full p-1">
+      {showSnackbar && (
+        <Snackbar 
+          message={message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
-            <p>Sales from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+            <p>Sales from <span className='font-medium'>{new Date(startDate).toLocaleDateString()}</span> to <span className='font-medium'>{new Date(endDate).toLocaleDateString()}</span></p>
           )}
         </div>
         <div className='flex items-center gap-2 h-[37px] ml-4'>
-            <button 
-              onClick={() => setDateRangeModal(true)}
-              className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-            >
-              <Calendar size={18} />
-              Select Date Range
-            </button>
+          <button 
+            onClick={() => setDateRangeModal(true)}
+            className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+          >
+            <Calendar size={18} />
+            Select Date Range
+          </button>
         </div>
       </div>
 
@@ -160,14 +182,18 @@ const SalesReportTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {setStartDate(''); setEndDate('')}}
+                  onClick={() => {
+                    setStartDate(''); 
+                    setEndDate('');
+                    setPagination({ ...pagination, pageIndex: 0 });
+                  }}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
                 </button>
                 <button 
                   type='button'
-                  onClick={() => setDateRangeModal(false)}
+                  onClick={handleDateRangeSubmit}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Confirm
@@ -239,7 +265,7 @@ const SalesReportTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? <Loading /> : 'No records found'}
                 </td> 
               </tr> 
             )}
@@ -250,7 +276,7 @@ const SalesReportTable = () => {
                   Total Sales
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{totalSalesAmount.toFixed(2)}
+                  ₱{summary.total_sales.toFixed(2)}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={1}></td>
               </tr>
@@ -279,24 +305,21 @@ const SalesReportTable = () => {
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p className="text-sm text-gray-700">
-            {table.getRowModel().rows.length > 0 ? (
-              <>
-                Showing{' '}
-                <span className="font-medium">
-                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    filteredData.length
-                  )}
-                </span>{' '}
-                of <span className="font-medium">{filteredData.length}</span> results
-              </>
-            ) : (
-              'No records to show'
-            )}
+            Showing{' '}
+            <span className="font-medium">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+            </span>{' '}
+            to{' '}
+            <span className="font-medium">
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                totalRecords
+              )}
+            </span>{' '}
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

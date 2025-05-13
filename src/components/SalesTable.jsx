@@ -78,7 +78,7 @@ const SalesTable = () => {
       }
     };
     fetchSales();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize]);//
 
   const columns = useMemo(
     () => [
