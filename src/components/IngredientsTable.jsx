@@ -10,6 +10,7 @@ import {
 import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from './Snackbar';
+import Loading from '../components/Loading';
 
 const IngredientsTable = ({openSettingsModal, lowStock}) => {
   const [data, setData] = useState([]);
@@ -456,7 +457,7 @@ const IngredientsTable = ({openSettingsModal, lowStock}) => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  {loading ? 'Fetching ingredients...' : 'No ingredients available'}
+                  {loading ? <Loading /> : 'No ingredients available'}
                 </td>
               </tr>
             )}

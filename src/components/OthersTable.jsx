@@ -10,6 +10,7 @@ import {
 import { CirclePlus, Search, X, Settings, PencilLine, Trash } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from './Snackbar';
+import Loading from '../components/Loading';
 
 const OthersTable = ({openSettingsModal}) => {
   const [data, setData] = useState([]);
@@ -444,7 +445,7 @@ useEffect(() => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  {loading ? 'Fetching items...' : 'No items available'}
+                  {loading ? <Loading /> : 'No items available'}
                 </td>
               </tr>
             )}

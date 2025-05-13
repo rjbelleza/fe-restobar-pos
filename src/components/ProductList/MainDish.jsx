@@ -10,6 +10,7 @@ import {
 import { CirclePlus, Search, X, PencilLine, CircleMinus } from 'lucide-react';
 import api from '../../api/axios';
 import Snackbar from '../Snackbar';
+import Loading from '../../components/Loading';
 
 const MainDish = () => {
   const [data, setData] = useState([]);
@@ -565,7 +566,7 @@ const MainDish = () => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  {loading ? 'Fetching main dishes...' : 'No main dish available'}
+                  {loading ? <Loading /> : 'No main dish available'}
                 </td>
               </tr>
             )}

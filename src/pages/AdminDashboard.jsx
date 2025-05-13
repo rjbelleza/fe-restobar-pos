@@ -5,7 +5,7 @@ import Breadcrumb from '../components/Breadcrumb';
 import Card from '../components/Card';
 import ColumnChart from '../components/ColumnChart';
 import Footer from '../layouts/Footer'; 
-import { Calendar, HandCoins, Receipt, ChartNoAxesCombined } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 
 const AdminDashboard = () => {

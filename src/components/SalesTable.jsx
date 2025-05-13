@@ -10,6 +10,7 @@ import {
 import { Calendar, X, Eye } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const SalesTable = () => {
   const [data, setData] = useState([]);
@@ -44,6 +45,11 @@ const SalesTable = () => {
       setSelectedRow((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  function capitalize(str) {
+    if (!str || typeof str !== 'string') return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 
   function capitalize(str) {
     if (!str || typeof str !== 'string') return str;
@@ -245,7 +251,7 @@ const SalesTable = () => {
               <input
                 type="text"
                 name="order_type"
-                value={selectedRow.order_type || ''}
+                value={capitalize(selectedRow.order_type)}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 readOnly
@@ -254,7 +260,7 @@ const SalesTable = () => {
               <input
                 type="text"
                 name="total_amount"
-                value={`₱${selectedRow.total_amount?.toFixed(2) || '0.00'}`}
+                value={`₱ ${selectedRow.total_amount}`}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 readOnly
@@ -263,7 +269,7 @@ const SalesTable = () => {
               <input
                 type="text"
                 name="dateTime"
-                value={selectedRow.dateTime || ''}
+                value={selectedRow.created_at}
                 onChange={handleInputChange}
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 readOnly
@@ -337,7 +343,7 @@ const SalesTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  {loading ? 'Fetching records...' : 'No records found'}
+                  {loading ? <Loading /> : 'No records found'}
                 </td>
               </tr>
             )}

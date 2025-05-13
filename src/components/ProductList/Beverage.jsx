@@ -10,6 +10,7 @@ import {
 import { CirclePlus, Search, X, PencilLine, Eye } from 'lucide-react';
 import api from '../../api/axios';
 import Snackbar from '../Snackbar';
+import Loading from '../../components/Loading';
 
 const Beverage = () => {
   const [data, setData] = useState([]);
@@ -457,7 +458,7 @@ const Beverage = () => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  {loading ? 'Fetching beverages...' : 'No beverages available'}
+                  {loading ? <Loading /> : 'No beverages available'}
                 </td>
               </tr>
             )}

@@ -13,12 +13,13 @@ import UserList from "./pages/UsersList";
 import CashierDashboard from "./pages/CashierDashboard";
 import OrderHistory from "./pages/OrderHistory";
 import ProfitReport from "./pages/ProfitReport";
+import LoadingScreen from "./pages/LoadingScreen";
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ element, role }) => {
     const { user, loading } = useAuth();
 
-    if (loading) return <div>Loading...</div>; // Wait for auth check
+    if (loading) return <LoadingScreen />; // Wait for auth check
   
     if (!user) return <Navigate to="/" replace />; // Redirect if not logged in
   

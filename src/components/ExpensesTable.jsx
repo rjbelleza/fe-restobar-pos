@@ -10,6 +10,7 @@ import {
 import { CirclePlus, Calendar, X } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const ExpensesTable = () => {
   const [data, setData] = useState([]);
@@ -361,7 +362,7 @@ const ExpensesTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  {loading ? 'Fetching expenses...' : 'No expenses found'}
+                  {loading ? <Loading /> : 'No expenses found'}
                 </td>
               </tr>
             )}

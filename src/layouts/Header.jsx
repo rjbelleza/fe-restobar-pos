@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth } from '../contexts/AuthContexts';
+import { LogOut } from 'lucide-react';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -31,7 +32,7 @@ const Header = () => {
             <div className="w-screen h-[70px] bg-primary p-[20px] flex items-center justify-between">
                 <h1 className="text-[20px] font-bold ml-[30px] text-white cursor-pointer">Nuna's Restobar</h1>
                 <Link to="/" onClick={handleLogoutClick}>
-                    <h1 className="text-white mr-[30px] cursor-pointer">Logout</h1>
+                    <h1 className="text-white mr-[30px] cursor-pointer"><LogOut/></h1>
                 </Link>
             </div>
 

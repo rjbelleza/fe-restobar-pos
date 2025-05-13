@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import api from '../api/axios';
 import Snackbar from "./Snackbar";
+import Loading from '../components/Loading';
 
 const MenuList = () => {
     const [orderItems, setOrderItems] = useState([]);
@@ -224,7 +225,7 @@ const MenuList = () => {
                 </div>
 
                 <div className="w-full pb-30 px-10 py-10 overflow-y-auto scrollbar-thin scrollbar-thumb-primary scrollbar-track-gray-100">
-                    { loading ? 'Fetching Products...' 
+                    { loading ? <Loading />
                     : menuItems.length === 0 ? 'No Products available' 
                     : (<MenuCard 
                         menu={menuItems} 

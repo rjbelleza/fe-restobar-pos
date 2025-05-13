@@ -10,6 +10,7 @@ import {
 import { X, Eye } from 'lucide-react';
 import api from '../api/axios';
 import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const OrderHistoryTable = () => {
   const [data, setData] = useState([]);
@@ -260,7 +261,7 @@ const OrderHistoryTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  {loading ? 'Fetching records...' : 'No records found'}
+                  {loading ? <Loading /> : 'No records found'}
                 </td>
               </tr>
             )}
