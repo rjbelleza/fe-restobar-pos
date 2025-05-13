@@ -208,11 +208,6 @@ const MainDish = () => {
     setIsEditing(true);
     setShowDishModal(true);
     setImageChanged(false);
-
-    // Debug: Log the quantities and ingredients to help troubleshoot
-    console.log('Dish ingredients:', dishIngredients);
-    console.log('Formatted ingredients:', formattedIngredients);
-    console.log('Ingredient quantities:', quantities);
   };
 
   const handleDeleteClick = (row) => {
@@ -377,7 +372,7 @@ const MainDish = () => {
       {/* Dish Modal (Add/Edit) */}
       {showDishModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
-          <div className="bg-white max-h-[600px] min-h-[500px] px-5 pt-5 rounded-sm shadow-lg overfloy-auto scrollbar-thin">
+          <div className="bg-white max-h-[600px] min-h-[500px] px-5 pt-5 pb-5 rounded-sm shadow-lg overfloy-auto scrollbar-thin">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8 pl-5">
               {isEditing ? 'UPDATE DISH' : 'ADD NEW DISH'}
               <button 
@@ -385,14 +380,14 @@ const MainDish = () => {
                   setShowDishModal(false);
                   resetDishForm();
                 }} 
-                disabled={isSubmitting}
+                disabled={isSubmitting} 
                 className="text-gray-800 hover:text-gray-600 disabled:opacity-50 cursor-pointer"
               >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col h-full" onSubmit={handleDishSubmit} encType="multipart/form-data">
-              <div className='flex gap-40 mb-15'>
+            <form className="flex flex-col items-center h-full" onSubmit={handleDishSubmit} encType="multipart/form-data">
+              <div className='flex gap-15 mb-15'>
                 <div className='flex flex-col'>
                   <label className="text-[15px] mb-2">Dish Name</label>
                   <input
@@ -463,7 +458,7 @@ const MainDish = () => {
                               handleDecrement(i.id);
                             }
                           }}
-                          className='w-[35px] text-[15px] px-3 font-medium py-1 rounded-sm'
+                          className='w-[35px] text-[15px] px-2 font-medium py-1 rounded-sm'
                           disabled={isSubmitting}
                           readOnly
                         />
@@ -482,7 +477,7 @@ const MainDish = () => {
               </div>
               <button 
                 type="submit" 
-                className="bg-primary text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black"
+                className="bg-primary w-3/4 text-white font-medium py-3 cursor-pointer rounded-sm hover:bg-mustard hover:text-black"
                 disabled={isSubmitting}
               >
                 {isSubmitting 

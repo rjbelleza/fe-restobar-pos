@@ -142,7 +142,7 @@ const MenuList = () => {
                     quantity: item.quantity,
                     price: item.price
                 })),
-                discount_percent: discountPercent || 0,
+                discount_percent: discountPercent || 0,  // This is now correctly sending percentage
                 total_amount: total,
                 amount_paid: parseFloat(amountPaid),
                 payment_method: paymentMethod,
@@ -359,7 +359,7 @@ const MenuList = () => {
                     className={`w-fit bg-white px-10 py-10 rounded-sm shadow-lg transition-all duration-300 ${proceedModal ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}
                 >
                     <div className="text-center">
-                        <p className="text-[25px] font-medium text-primary">"Thank you for choosing us!"</p>
+                        <p className="text-[25px] font-medium text-primary">"Thank you for your purchase!"</p>
                     </div>
                 </div>
             </div>

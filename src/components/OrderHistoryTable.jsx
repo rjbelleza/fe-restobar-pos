@@ -78,7 +78,7 @@ const OrderHistoryTable = () => {
       {
         accessorKey: 'discount',
         header: 'Discount',
-        cell: info => `₱ ${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        cell: info =>  ` ${info.getValue()}%`,
         size: 190,
       },
       {
