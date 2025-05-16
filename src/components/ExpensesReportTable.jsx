@@ -8,29 +8,93 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { Calendar, X } from 'lucide-react';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const ExpensesReportTable = () => {
   const [data, setData] = useState([]);
+  const [totalExpenses, setTotalExpenses] = useState(0);
   const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [globalFilter, setGlobalFilter] = useState('');
-  const [searchDate, setSearchDate] = useState('');
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 5, // default page size
-  });
-  const [dateRangeModal, setDateRangeModal] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [dateRangeModal, setDateRangeModal] = useState(false);
+
+  const formatDateTime = (dateTimeString) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchExpenses = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/expenses/fetch', {
+        params: {
+          pageSize: pagination.pageSize,
+          page: pagination.pageIndex + 1,
+          start_date: startDate,
+          end_date: endDate
+        }
+      });
+      setData(res.data.data || []);
+      setPageCount(res.data.last_page || 0);
+      setTotalRecords(res.data.total || 0);
+      
+      // Calculate total expenses from all data, ensure we're using parseFloat for proper calculation
+      const currentTotal = res.data.data.reduce((sum, item) => {
+        const amount = parseFloat(item.total_amount || 0);
+        return sum + amount;
+      }, 0);
+      setTotalExpenses(currentTotal);
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Error fetching expenses');
+      setResponseStatus('error');
+      setShowSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch('/data/expensesReport.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    fetchExpenses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
 
   const columns = useMemo(
     () => [
+      {
+        id: 'rowNumber',
+        header: '#',
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
+        accessorFn: (row, index) => index + 1,
+        size: 50,
+      },
       {
         accessorKey: 'description',
         header: 'Description',
@@ -38,74 +102,69 @@ const ExpensesReportTable = () => {
         size: 190,
       },
       {
-        accessorKey: 'totalAmount',
-        header: 'Total Amount',
-        cell: info => "₱" + info.getValue().toFixed(2),
+        accessorKey: 'total_amount',
+        header: 'Amount',
+        cell: info => `₱${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 160,
       },
       {
-        accessorKey: 'date',
-        header: 'Date',
-        cell: info => info.getValue(),
+        accessorKey: 'created_at',
+        header: 'Date & Time',
+        cell: info => formatDateTime(info.getValue()),
         size: 160,
       }
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
-  // Filter data by date
-  const filteredData = useMemo(() => {
-    if (!searchDate) return data;
-    return data.filter(item => {
-      try {
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return false;
-        const formattedItemDate = itemDate.toISOString().split('T')[0];
-        return formattedItemDate === searchDate;
-      } catch (e) {
-        console.warn('Invalid date format for item:', item);
-        return false;
-      }
-    });
-  }, [data, searchDate]);
-
-  const totalSalesAmount = useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + (item.totalAmount || 0), 0);
-  }, [filteredData]);
-
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
-      globalFilter,
       pagination,
+      globalFilter,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(), // ✨ ADD THIS
+    getPaginationRowModel: getPaginationRowModel(),
   });
+
+  const handleDateRangeSubmit = () => {
+    setPagination({ ...pagination, pageIndex: 0 });
+    setDateRangeModal(false);
+  };
 
   return (
     <div className="h-[455px] w-full p-1">
+      {showSnackbar && (
+        <Snackbar 
+          message={message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
-            <p>Expenses from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+            <p>Expenses from <span className='font-medium'>{formatDateForDisplay(startDate)}</span> to <span className='font-medium'>{formatDateForDisplay(endDate)}</span></p>
           )}
         </div>
         <div className='flex items-center gap-2 h-[37px] ml-4'>
-            <button 
-              onClick={() => setDateRangeModal(true)}
-              className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-            >
-              <Calendar size={18} />
-              Select Date Range
-            </button>
+          <button 
+            onClick={() => setDateRangeModal(true)}
+            className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+          >
+            <Calendar size={18} />
+            Select Date Range
+          </button>
         </div>
       </div>
 
@@ -146,14 +205,18 @@ const ExpensesReportTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {setStartDate(''); setEndDate('')}}
+                  onClick={() => {
+                    setStartDate(''); 
+                    setEndDate('');
+                    setPagination({ ...pagination, pageIndex: 0 });
+                  }}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
                 </button>
                 <button 
                   type='button'
-                  onClick={() => setDateRangeModal(false)}
+                  onClick={handleDateRangeSubmit}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Confirm
@@ -165,7 +228,7 @@ const ExpensesReportTable = () => {
       )}
 
       {/* Table */}
-      <div className="h-full overflow-auto rounded-lg border border-gray-200">
+      <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -210,9 +273,6 @@ const ExpensesReportTable = () => {
                     <td
                       key={cell.id}
                       className="px-4 py-3 text-sm text-gray-600 font-medium border border-gray-200"
-                      style={{
-                        width: cell.column.getSize(),
-                      }}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -228,23 +288,23 @@ const ExpensesReportTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? <Loading /> : 'No records found'}
                 </td> 
               </tr> 
             )}
+            {/* Total Expenses Row */}
+            {data.length > 0 && (
+              <tr className="font-semibold sticky bottom-0 bg-secondary">
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={2}>
+                  Total Expenses
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                  {totalExpenses ? `₱${parseFloat(totalExpenses).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '₱0.00'}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200"></td>
+              </tr>
+            )}
           </tbody>
-          {/* Footer with Total Sales */}
-          <tfoot className="sticky bottom-0 bg-secondary">
-            <tr>
-              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200">
-                Total Expenses
-              </td>
-              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200">
-                ₱{totalSalesAmount.toFixed(2)}
-              </td>
-              <td className="px-4 py-3 text-sm font-semibold text-gray-600 border border-gray-200"></td>
-            </tr>
-          </tfoot>
         </table>
       </div>
 
@@ -268,24 +328,21 @@ const ExpensesReportTable = () => {
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p className="text-sm text-gray-700">
-            {table.getRowModel().rows.length > 0 ? (
-              <>
-                Showing{' '}
-                <span className="font-medium">
-                  {pagination.pageIndex * pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (pagination.pageIndex + 1) * pagination.pageSize,
-                    filteredData.length
-                  )}
-                </span>{' '}
-                of <span className="font-medium">{filteredData.length}</span> results
-              </>
-            ) : (
-              'No records to show'
-            )}
+            Showing{' '}
+            <span className="font-medium">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+            </span>{' '}
+            to{' '}
+            <span className="font-medium">
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                totalRecords
+              )}
+            </span>{' '}
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

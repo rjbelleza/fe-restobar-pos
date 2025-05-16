@@ -8,118 +8,219 @@ import {
   flexRender,
 } from '@tanstack/react-table'; 
 import { Calendar, X } from 'lucide-react';
+import api from '../api/axios';
+import Snackbar from '../components/Snackbar';
+import Loading from '../components/Loading';
 
 const ProfitReportTable = () => {
   const [data, setData] = useState([]);
   const [sorting, setSorting] = useState([]);
+  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [globalFilter, setGlobalFilter] = useState('');
-  const [searchDate, setSearchDate] = useState('');
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 5, // You can change the default page size here
-  });
-  const [dateRangeModal, setDateRangeModal] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [responseStatus, setResponseStatus] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [pageCount, setPageCount] = useState(0);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [dateRangeModal, setDateRangeModal] = useState(false);
+  const [totalSales, setTotalSales] = useState(0);
+  const [totalExpenses, setTotalExpenses] = useState(0);
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch sales data
+      const salesParams = {
+        pageSize: pagination.pageSize,
+        page: pagination.pageIndex + 1,
+      };
+      if (startDate) salesParams.start_date = startDate;
+      if (endDate) salesParams.end_date = endDate;
+      
+      const salesResponse = await api.get('/sales/fetch', { params: salesParams });
+      const salesData = salesResponse.data?.sales?.data || [];
+      const salesSummary = salesResponse.data?.summary || {};
+      
+      // Fetch expenses data
+      const expensesParams = {
+        pageSize: pagination.pageSize,
+        page: pagination.pageIndex + 1,
+      };
+      if (startDate) expensesParams.start_date = startDate;
+      if (endDate) expensesParams.end_date = endDate;
+      
+      const expensesResponse = await api.get('/expenses/fetch', { params: expensesParams });
+      const expensesData = expensesResponse.data?.data || [];
+      
+      // Combine and format the data
+      const combinedData = formatProfitData(salesData, expensesData);
+      
+      setData(combinedData);
+      setTotalSales(salesSummary.total_sales || 0);
+      
+      // Calculate total expenses
+      const expensesTotal = expensesData.reduce((sum, item) => sum + parseFloat(item.total_amount || 0), 0);
+      setTotalExpenses(expensesTotal);
+      
+      // For pagination, use whichever dataset has more pages
+      setPageCount(Math.max(
+        salesResponse.data?.sales?.last_page || 0,
+        expensesResponse.data?.last_page || 0
+      ));
+      setTotalRecords(Math.max(
+        salesResponse.data?.sales?.total || 0,
+        expensesResponse.data?.total || 0
+      ));
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Error fetching data');
+      setResponseStatus('error');
+      setShowSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatProfitData = (sales, expenses) => {
+    // Group sales by date
+    const salesByDate = {};
+    sales.forEach(sale => {
+      const date = new Date(sale.created_at).toISOString().split('T')[0];
+      if (!salesByDate[date]) {
+        salesByDate[date] = 0;
+      }
+      salesByDate[date] += parseFloat(sale.total_amount || 0);
+    });
+    
+    // Group expenses by date
+    const expensesByDate = {};
+    expenses.forEach(expense => {
+      const date = new Date(expense.created_at).toISOString().split('T')[0];
+      if (!expensesByDate[date]) {
+        expensesByDate[date] = 0;
+      }
+      expensesByDate[date] += parseFloat(expense.total_amount || 0);
+    });
+    
+    // Get all unique dates
+    const allDates = new Set([
+      ...Object.keys(salesByDate),
+      ...Object.keys(expensesByDate)
+    ]);
+    
+    // Create combined data
+    return Array.from(allDates).map(date => ({
+      date,
+      sales: salesByDate[date] || 0,
+      expenses: expensesByDate[date] || 0,
+    })).sort((a, b) => new Date(b.date) - new Date(a.date));
+  };
 
   useEffect(() => {
-    fetch('/data/profitReport.json')
-      .then(response => response.json())
-      .then(jsonData => setData(jsonData))
-      .catch(error => console.error('Error fetching data:', error));
-  }, []);
+    fetchData();
+  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
 
   const columns = useMemo(
     () => [
       {
+        id: 'rowNumber',
+        header: '#',
+        cell: ({ row }) => (pagination.pageIndex * pagination.pageSize) + row.index + 1,
+        accessorFn: (row, index) => index + 1,
+        size: 50,
+      },
+      {
         accessorKey: 'date',
         header: 'Date',
-        cell: info => info.getValue(),
+        cell: info => formatDateForDisplay(info.getValue()),
         size: 190,
       },
       {
         accessorKey: 'sales',
         header: 'Sales',
-        cell: info => "₱" + info.getValue().toFixed(2),
+        cell: info => `₱${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 160,
       },
       {
         accessorKey: 'expenses',
         header: 'Expenses',
-        cell: info => "₱" + info.getValue().toFixed(2),
+        cell: info => `₱${parseFloat(info.getValue()).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 160,
       },
       {
         id: 'net_profit',
         header: 'Net Profit',
-        cell: info => "₱" + (info.row.original.sales - info.row.original.expenses).toFixed(2),
+        cell: info => `₱${(parseFloat(info.row.original.sales) - parseFloat(info.row.original.expenses)).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         size: 160,
       },
     ],
-    []
+    [pagination.pageIndex, pagination.pageSize]
   );
 
-  const filteredData = useMemo(() => {
-    if (!searchDate) return data;
-    
-    return data.filter(item => {
-      try {
-        const itemDate = new Date(item.date);
-        if (isNaN(itemDate.getTime())) return false;
-        const formattedItemDate = itemDate.toISOString().split('T')[0];
-        return formattedItemDate === searchDate;
-      } catch (e) {
-        console.warn('Invalid date format for item:', item);
-        return false;
-      }
-    });
-  }, [data, searchDate]);
-
-  const totalSalesAmount = useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + (item.sales || 0), 0);
-  }, [filteredData]);
-
-  const totalExpensesAmount = useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + (item.expenses || 0), 0);
-  }, [filteredData]);
-
-  const totalNetProfit = useMemo(() => {
-    return totalSalesAmount - totalExpensesAmount;
-  }, [totalSalesAmount, totalExpensesAmount]);
-
   const table = useReactTable({
-    data: filteredData,
+    data,
     columns,
+    pageCount,
+    manualPagination: true,
     state: {
       sorting,
-      globalFilter,
       pagination,
+      globalFilter,
     },
     onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
     onPaginationChange: setPagination,
+    onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  const handleDateRangeSubmit = () => {
+    setPagination({ ...pagination, pageIndex: 0 });
+    setDateRangeModal(false);
+  };
+
+  const totalNetProfit = useMemo(() => {
+    return totalSales - totalExpenses;
+  }, [totalSales, totalExpenses]);
+
   return (
     <div className="h-[455px] w-full p-1">
+      {showSnackbar && (
+        <Snackbar 
+          message={message}
+          type={responseStatus}
+          onClose={() => setShowSnackbar(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
-            <p>Profit from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+            <p>Profit from <span className='font-medium'>{formatDateForDisplay(startDate)}</span> to <span className='font-medium'>{formatDateForDisplay(endDate)}</span></p>
           )}
         </div>
         <div className='flex items-center gap-2 h-[37px] ml-4'>
-            <button 
-              onClick={() => setDateRangeModal(true)}
-              className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
-            >
-              <Calendar size={18} />
-              Select Date Range
-            </button>
+          <button 
+            onClick={() => setDateRangeModal(true)}
+            className='flex items-center gap-3 bg-primary text-white text-[14px] font-medium px-4 py-2 rounded-sm cursor-pointer hover:bg-mustard hover:text-black'
+          >
+            <Calendar size={18} />
+            Select Date Range
+          </button>
         </div>
       </div>
 
@@ -160,14 +261,18 @@ const ProfitReportTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {setStartDate(''); setEndDate('')}}
+                  onClick={() => {
+                    setStartDate(''); 
+                    setEndDate('');
+                    setPagination({ ...pagination, pageIndex: 0 });
+                  }}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
                 </button>
                 <button 
                   type='button'
-                  onClick={() => setDateRangeModal(false)}
+                  onClick={handleDateRangeSubmit}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Confirm
@@ -239,24 +344,24 @@ const ProfitReportTable = () => {
                   colSpan={columns.length}
                   className="px-4 py-6 text-center text-gray-500"
                 >
-                  No records found
+                  {loading ? <Loading /> : 'No records found'}
                 </td> 
               </tr> 
             )}
             {/* Totals Row */}
             {data.length > 0 && (
               <tr className="font-semibold sticky bottom-0 bg-secondary">
-                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
+                <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={2}>
                   Totals
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{totalSalesAmount.toFixed(2)}
+                  ₱{parseFloat(totalSales).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{totalExpensesAmount.toFixed(2)}
+                  ₱{parseFloat(totalExpenses).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200">
-                  ₱{totalNetProfit.toFixed(2)}
+                  ₱{parseFloat(totalNetProfit).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
               </tr>
             )}
@@ -284,24 +389,21 @@ const ProfitReportTable = () => {
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
           <p className="text-sm text-gray-700">
-            {filteredData.length > 0 ? (
-              <>
-                Showing{' '}
-                <span className="font-medium">
-                  {pagination.pageIndex * pagination.pageSize + 1}
-                </span>{' '}
-                to{' '}
-                <span className="font-medium">
-                  {Math.min(
-                    (pagination.pageIndex + 1) * pagination.pageSize,
-                    filteredData.length
-                  )}
-                </span>{' '}
-                of <span className="font-medium">{filteredData.length}</span> results
-              </>
-            ) : (
-              'No records to show'
-            )}
+            Showing{' '}
+            <span className="font-medium">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+            </span>{' '}
+            to{' '}
+            <span className="font-medium">
+              {Math.min(
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
+                totalRecords
+              )}
+            </span>{' '}
+            of <span className="font-medium">{totalRecords}</span> results
           </p>
           <div>
             <nav

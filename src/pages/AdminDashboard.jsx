@@ -12,8 +12,8 @@ import api from '../api/axios';
 
 
 const AdminDashboard = () => {
-   const [range, setRange] = useState('last_day');
-    const [summary, setSummary] = useState([]);
+   const [range, setRange] = useState('current_day');
+    const [summary, setSummary] = useState({});
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [message, setMessage] = useState('');
     const [responseStatus, setResponseStatus] = useState('');
@@ -21,14 +21,22 @@ const AdminDashboard = () => {
     
     const fetchSummaryByRange = async () => {
         try {
+          setLoading(true);
           const response = await api.get('/summary/fetch', {
             params: { range: range }
           });
-          setSummary(response.data?.data);
+          
+          // Ensure data is properly structured before setting state
+          if (response.data && response.data.data) {
+            setSummary(response.data.data);
+          } else {
+            throw new Error('Invalid response format');
+          }
         } catch (err) {
           setMessage(err.response?.data?.message || 'Something went wrong');
           setResponseStatus(err.response?.data?.status || 'error');
           setShowSnackbar(true);
+          console.error('Error fetching summary:', err);
         } finally {
           setLoading(false);
         }
@@ -38,14 +46,13 @@ const AdminDashboard = () => {
         if(loading) {
             return <ComponentLoading />
         }
-        if(isNaN(value)) {
-            return  <ComponentLoading />
+        if(value === undefined || value === null || isNaN(value)) {
+            return <ComponentLoading />
         }
         return `₱${Number(value).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
     };
 
     useEffect(() => {
-        setLoading(true);
         fetchSummaryByRange();
     }, [range]);
 
@@ -67,9 +74,9 @@ const AdminDashboard = () => {
           <Breadcrumb />
           <div className="grid grid-cols-4 w-full px-5 gap-5 mb-3">
               <button 
-                onClick={() => setRange('last_day')}
-                className={`flex items-center justify-center gap-2 ${range === 'last_day' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
-                  <Calendar size={15} /> Last Day
+                onClick={() => setRange('current_day')}
+                className={`flex items-center justify-center gap-2 ${range === 'current_day' ? 'bg-mustard' : 'bg-secondary'} focus:bg-mustard py-2 focus:text-black hover:bg-mustard hover:text-black rounded-full text-black text-[14px] font-medium shadow-md shadow-gray-900 cursor-pointer`}>
+                  <Calendar size={15} /> Current Day
               </button>
               <button 
                 onClick={() => setRange('last_week')}
