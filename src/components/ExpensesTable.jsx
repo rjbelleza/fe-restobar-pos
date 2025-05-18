@@ -70,10 +70,13 @@ const ExpensesTable = () => {
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
+        setLoading(true);
         const res = await api.get('/expenses/fetch', {
           params: {
             page: pagination.pageIndex + 1,
-            per_page: pagination.pageSize
+            per_page: pagination.pageSize,
+            start_date: startDate,
+            end_date: endDate
           }
         });
         setData(res.data?.data);
@@ -88,7 +91,30 @@ const ExpensesTable = () => {
       }
     };
     fetchExpenses();
-  }, [keyTrigger,pagination.pageIndex, pagination.pageSize]);
+  }, [keyTrigger, pagination.pageIndex, pagination.pageSize, startDate, endDate]);
+
+  const handleDateRangeSubmit = () => {
+    // Reset to first page when applying date filters
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    setDateRangeModal(false);
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate('');
+    setEndDate('');
+    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    setDateRangeModal(false);
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
 
   const columns = useMemo(
     () => [
@@ -154,7 +180,7 @@ const ExpensesTable = () => {
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
-            <p>Sales from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+            <p>Sales from <span className='font-medium'>{formatDateForDisplay(startDate)}</span> to <span className='font-medium'>{formatDateForDisplay(endDate)}</span></p>
           )}
         </div>
         <div className='flex'>
@@ -216,14 +242,14 @@ const ExpensesTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {setStartDate(''); setEndDate('')}}
+                  onClick={handleClearDateRange}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
                 </button>
                 <button 
                   type='button'
-                  onClick={() => setDateRangeModal(false)}
+                  onClick={handleDateRangeSubmit}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Confirm

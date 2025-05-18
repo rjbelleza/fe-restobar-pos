@@ -28,10 +28,10 @@ const SalesReportTable = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [dateRangeModal, setDateRangeModal] = useState('');
+  const [dateRangeModal, setDateRangeModal] = useState(false);
   const [summary, setSummary] = useState(0);
 
-   const handleViewClick = (row) => {
+  const handleViewClick = (row) => {
     setSelectedRow(row.original);
     setShowViewModal(true);
   };
@@ -42,30 +42,35 @@ const SalesReportTable = () => {
   }
 
   const fetchTotalSales = async () => {
-      try {
-        const response = await api.get('/summary/fetch', {
-          params: { range: 'last_year' }
-        });
-        setTotalSales(response.data?.data?.total_sales);
-      } catch (err) {
-        setMessage(err.response?.data?.message || 'Something went wrong');
-        setResponseStatus(err.response?.data?.status || 'error');
-        setShowSnackbar(true);
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const response = await api.get('/summary/fetch', {
+        params: { range: 'last_year' }
+      });
+      setTotalSales(response.data?.data?.total_sales);
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Something went wrong');
+      setResponseStatus(err.response?.data?.status || 'error');
+      setShowSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/sales/fetch', {
-          params: {
-            page: pagination.pageIndex + 1,
-            per_page: pagination.pageSize
-          }
-        });
+        const params = {
+          page: pagination.pageIndex + 1,
+          per_page: pagination.pageSize
+        };
+
+        if (startDate && endDate) {
+          params.start_date = startDate;
+          params.end_date = endDate;
+        }
+
+        const res = await api.get('/sales/fetch', { params });
         setData(res.data?.sales?.data || []);
         setPageCount(res.data?.sales?.last_page || 0);
         setTotalRecords(res.data?.sales?.total || 0);
@@ -80,7 +85,7 @@ const SalesReportTable = () => {
     };
     fetchSales();
     fetchTotalSales();
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
 
   const columns = useMemo(
     () => [
@@ -176,7 +181,14 @@ const SalesReportTable = () => {
   });
 
   const handleDateRangeSubmit = () => {
-    setPagination({ ...pagination, pageIndex: 0 }); // Reset to first page when changing date range
+    setPagination({ ...pagination, pageIndex: 0 });
+    setDateRangeModal(false);
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate('');
+    setEndDate('');
+    setPagination({ ...pagination, pageIndex: 0 });
     setDateRangeModal(false);
   };
 
@@ -244,11 +256,7 @@ const SalesReportTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {
-                    setStartDate(''); 
-                    setEndDate('');
-                    setPagination({ ...pagination, pageIndex: 0 });
-                  }}
+                  onClick={handleClearDateRange}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
@@ -266,7 +274,6 @@ const SalesReportTable = () => {
         </div>
       )}
 
-      {/* View Modal */}
       {showViewModal && selectedRow && (
         <div
           className="fixed inset-0 flex items-center justify-center z-1000"
@@ -321,7 +328,6 @@ const SalesReportTable = () => {
         </div>
       )}
 
-      {/* Table */}
       <div className="h-full overflow-x-auto rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200 border-collapse">
           <thead className="bg-gray-200 sticky top-0">
@@ -386,7 +392,6 @@ const SalesReportTable = () => {
                 </td> 
               </tr> 
             )}
-            {/* Total Sales Row */}
             {data.length > 0 && (
               <tr className="font-semibold sticky bottom-0 bg-secondary">
                 <td className="px-4 py-3 text-sm text-gray-600 border border-gray-200" colSpan={3}>
@@ -401,7 +406,6 @@ const SalesReportTable = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-between mt-4 px-1">
         <div className="flex-1 flex justify-between sm:hidden">
           <button

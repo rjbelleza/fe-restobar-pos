@@ -51,21 +51,22 @@ const SalesTable = () => {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
-  function capitalize(str) {
-    if (!str || typeof str !== 'string') return str;
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/sales/fetch', {
-          params: {
-            page: pagination.pageIndex + 1,
-            per_page: pagination.pageSize
-          }
-        });
+        const params = {
+          page: pagination.pageIndex + 1,
+          per_page: pagination.pageSize
+        };
+
+        // Add date range to params if both dates are selected
+        if (startDate && endDate) {
+          params.start_date = startDate;
+          params.end_date = endDate;
+        }
+
+        const res = await api.get('/sales/fetch', { params });
         setData(res.data?.sales?.data || []);
         setPageCount(res.data?.sales?.last_page || 0);
         setTotalRecords(res.data?.sales?.total || 0);
@@ -78,7 +79,19 @@ const SalesTable = () => {
       }
     };
     fetchSales();
-  }, [pagination.pageIndex, pagination.pageSize]);//
+  }, [pagination.pageIndex, pagination.pageSize, startDate, endDate]);
+
+  const handleDateRangeSubmit = () => {
+    setPagination({ ...pagination, pageIndex: 0 }); // Reset to first page when date range changes
+    setDateRangeModal(false);
+  };
+
+  const handleClearDateRange = () => {
+    setStartDate('');
+    setEndDate('');
+    setPagination({ ...pagination, pageIndex: 0 }); // Reset to first page when clearing date range
+    setDateRangeModal(false);
+  };
 
   const columns = useMemo(
     () => [
@@ -159,7 +172,7 @@ const SalesTable = () => {
       <div className="flex items-center justify-between h-[35px] w-full mb-2 pr-4">
         <div>
           {startDate && endDate && (
-            <p>Sales from <span className='font-medium'>{startDate}</span><span> to <span className='font-medium'>{endDate}</span></span></p>
+            <p>Sales from <span className='font-medium'>{new Date(startDate).toLocaleDateString()}</span> to <span className='font-medium'>{new Date(endDate).toLocaleDateString()}</span></p>
           )}
         </div>
         <div className='flex items-center gap-2 h-[37px] ml-4'>
@@ -210,14 +223,14 @@ const SalesTable = () => {
               <div className='flex gap-2 w-full'>
                 <button 
                   type='button'
-                  onClick={() => {setStartDate(''); setEndDate('')}}
+                  onClick={handleClearDateRange}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Clear
                 </button>
                 <button 
                   type='button'
-                  onClick={() => setDateRangeModal(false)}
+                  onClick={handleDateRangeSubmit}
                   className='bg-primary text-white w-full hover:bg-mustard hover:text-black px-3 py-2 rounded-sm cursor-pointer'
                 >
                   Confirm
