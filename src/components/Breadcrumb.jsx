@@ -32,6 +32,9 @@ const Breadcrumb = () => {
       else if (location.pathname === '/profit-report') {
         return 'NET PROFIT REPORT'
       }
+      else if (location.pathname === '/users') {
+        return 'USERS'
+      }
       else if (location.pathname === '/order-history') {
         return 'ORDER HISTORY'
       }

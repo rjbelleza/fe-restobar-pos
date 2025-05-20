@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";  
 import { AuthProvider, useAuth } from "./contexts/AuthContexts";
-import StaffDashboard from "./pages/StaffDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Inventory from "./pages/Inventory";
 import ProductList from "./pages/ProductList";
@@ -47,7 +46,6 @@ const App = () => {
                 <Route path="/profit-report" element={<ProtectedRoute element={<ProfitReport />} role="admin" />} />
 
                 {/* Protected Staff Routes */}
-                <Route path="/staff-dashboard" element={<ProtectedRoute element={<StaffDashboard />} role="cashier" />} />
                 <Route path="/inventory" element={<ProtectedRoute element={<Inventory />} role={["admin", "cashier"]} />} />
                 <Route path="/users" element={<ProtectedRoute element={<UserList />} role={["admin", "cashier"]} />} />
                 <Route path="/cashier-dashboard" element={<ProtectedRoute element={<CashierDashboard />} role={["cashier"]} />} />
