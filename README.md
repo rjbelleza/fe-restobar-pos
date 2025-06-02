@@ -23,17 +23,7 @@ npm install
 yarn install
 ```
 
-### 3. Environment Configuration
-```bash
-# Copy the example environment file
-cp .env.example .env
-
-# Open the file to edit configuration
-# (Use your preferred text editor)
-nano .env  # or code .env, vim .env, etc.
-```
-
-### 4. Start the Development Server
+### 3. Start the Development Server
 ```bash
 # Using npm
 npm run dev
@@ -42,7 +32,7 @@ npm run dev
 yarn run dev
 ```
 
-### 5. (Optional) Production Build
+### 4. (Optional) Production Build
 ```bash
 # Create production-ready build
 npm run build
