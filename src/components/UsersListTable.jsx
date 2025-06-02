@@ -8,6 +8,9 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import { CirclePlus, Search, X, PencilLine, Trash } from 'lucide-react';
+import ComponentLoading from './ComponentLoading';
+import api from '../api/axios';
+import Snackbar from './Snackbar';
 
 const UsersListTable = () => {
   const [data, setData] = useState([]);
@@ -15,33 +18,38 @@ const UsersListTable = () => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showSnackbar, setShowSnackbar] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
   const [newUser, setNewUser] = useState({ 
     lname: '', 
     fname: '', 
     mname: '', 
     username: '', 
-    role: 'admin' 
+    role: 'admin',
+    password: '' 
   });
   const [globalFilter, setGlobalFilter] = useState('');
   const [addUser, setAddUser] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
-
-  useEffect(() => {
-    fetch('/data/usersList.json')
-      .then(res => res.json())
-      .then(setData)
-      .catch(err => console.error('Error fetching data:', err));
-  }, []);
+  const [userIdToDelete, setUserIdToDelete] = useState(null);
+  const [responseStatus, setResponseStatus] = useState('');
 
   const handleUpdateClick = (row) => {
     setSelectedRow(row.original);
     setShowUpdateModal(true);
   };
 
-  const handleUpdateSubmit = (e) => {
+  const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    console.log('Updated data:', selectedRow);
-    setShowUpdateModal(false);
+    try {
+      await api.put(`/user/update/${selectedRow.id}`, selectedRow);
+      setRefreshKey(prev => prev + 1);
+      setShowUpdateModal(false);
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Error updating user');
+    }
   };
 
   const handleInputChange = (e) => {
@@ -59,25 +67,76 @@ const UsersListTable = () => {
     }
   };
 
-  const handleAddSubmit = (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault();
-    const newEntry = {
-      lname: newUser.lname,
-      fname: newUser.fname,
-      mname: newUser.mname,
-      username: newUser.username,
-      role: newUser.role,
-    };
-    setData(prev => [...prev, newEntry]);
-    setAddUser(false);
-    setNewUser({ 
-      lname: '', 
-      fname: '', 
-      mname: '', 
-      username: '', 
-      role: 'admin' 
-    });
+    try {
+      const res = await api.post('/user/add', newUser);
+      setNewUser({
+        fname: '',
+        lname: '', 
+        mname: '',
+        username: '',
+        password: '',
+        role: 'admin'
+      });
+      setRefreshKey(prev => prev + 1);
+      setMessage(res.response.message);
+      setResponseStatus('success');
+    } catch (e) {
+      setMessage(e.response?.data?.message || 'Error adding user');
+      setResponseStatus(e.response.data.status)
+    } finally {
+      setShowSnackbar(true);
+      setAddUser(false);
+    }
+  }
+
+  const handleDeleteClick = (row) => {
+    setUserIdToDelete(row.original.id);
+    setDeleteModal(true);
   };
+
+  const handleDeleteUser = async () => {
+    try {
+      await api.put(`/user/${userIdToDelete}/disable`);
+      setRefreshKey(prev => prev + 1);
+      setMessage('User deleted successfully');
+      setResponseStatus('success');
+      setShowSnackbar(true);
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Error deleting user');
+      setShowSnackbar(true);
+      setResponseStatus('error');
+    } finally {
+      setDeleteModal(false);
+      setUserIdToDelete(null);
+    }
+  };
+
+  useEffect(() => {
+    // Fetch Users data from server
+    const fetchUsers = async () => {
+      try {
+        const response = await api.get('/users');
+        setData(response.data);
+        setLoading(false);
+      } catch (err) {
+        setLoading(false);
+        setMessage(err.response?.data?.message || 'Error fetching users');
+        setShowSnackbar(true);
+      }
+    }
+    fetchUsers();
+  }, [refreshKey]);
+
+  useEffect(() => {
+    if (showSnackbar) {
+      const timer = setTimeout(() => {
+        setShowSnackbar(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSnackbar]);
 
   const handleSearchChange = (e) => {
     setGlobalFilter(e.target.value);
@@ -91,20 +150,20 @@ const UsersListTable = () => {
       size: 50,
     },
     {
-      accessorKey: 'lname',
-      header: 'Last Name',
-      cell: info => info.getValue(),
-      size: 190,
-    },
-    {
       accessorKey: 'fname',
       header: 'First Name',
       cell: info => info.getValue(),
       size: 190,
     },
     {
+      accessorKey: 'lname',
+      header: 'Last Name',
+      cell: info => info.getValue(),
+      size: 190,
+    },
+    {
       accessorKey: 'mname',
-      header: 'Middle Initial',
+      header: 'Middle Name',
       cell: info => info.getValue(),
       size: 190,
     },
@@ -132,7 +191,7 @@ const UsersListTable = () => {
               <PencilLine size={15} />
           </button>
           <button
-              onClick={() => setDeleteModal(true)}
+              onClick={() => handleDeleteClick(row)}
               className="text-white bg-primary hover:bg-mustard hover:text-black cursor-pointer rounded-sm px-3 py-2"
             >
               <Trash size={15} />
@@ -163,6 +222,15 @@ const UsersListTable = () => {
 
   return (
     <div className="h-[455px] w-full p-1">
+      {/* Snackbar for messages */}
+      {showSnackbar && (
+          <Snackbar 
+            message={message}
+            type={responseStatus}
+            onClose={() => setShowSnackbar(false)}
+          />
+        )}
+
       {/* Search and Add */}
       <div className='flex items-center justify-end h-[35px] w-full mb-2'>
         <Search className='mr-[-30px] text-primary' />
@@ -186,21 +254,26 @@ const UsersListTable = () => {
 
       {/* Delete Modal */}
       {deleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
           <div className="bg-white p-7 rounded-sm shadow-lg w-[300px]">
             <div className='flex justify-center w-full'>
-              <p>Are you sure to delete this user?</p>
+              <p>Are you sure you want to delete this user?</p>
             </div>
             <div className='flex justify-end gap-2 w-full mt-5'>
               <button 
-                onClick={() => setDeleteModal(false)}
-                className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
-                Yes
+                onClick={handleDeleteUser}
+                className="bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+              >
+                Delete
               </button>
               <button 
-                  onClick={() => setDeleteModal(false)}
-                  className='bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black'>
-                No
+                onClick={() => {
+                  setDeleteModal(false);
+                  setUserIdToDelete(null);
+                }}
+                className="bg-primary px-3 py-1 text-white rounded-sm cursor-pointer hover:bg-mustard hover:text-black"
+              >
+                Cancel
               </button>
             </div>
           </div>
@@ -209,15 +282,19 @@ const UsersListTable = () => {
 
       {/* Add Modal */}
       {addUser && (
-        <div className="fixed inset-0 flex items-center justify-center z-50"  style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)'}}>
-          <div className="bg-white p-7 px-20 pb-10 rounded-sm shadow-lg">
+        <div className="fixed inset-0 flex items-center justify-center z-50 pt-30 pb-10 scrollbar-thin overflow-y-auto" style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}>
+          <div className="bg-white p-7 px-20 rounded-sm shadow-lg">
             <p className="flex justify-between text-[19px] font-medium text-primary mb-8">
               ADD NEW USER
-              <button onClick={() => setAddUser(false)} className="text-gray-800 hover:text-gray-600">
+              <button
+                type='button' 
+                onClick={() => setAddUser(false)} 
+                className="text-gray-800 hover:text-gray-600 cursor-pointer"
+              >
                 <X size={20} />
               </button>
             </p>
-            <form className="flex flex-col" onSubmit={handleAddSubmit}>
+            <form className="flex flex-col" onSubmit={handleAddUser}>
               <label className="text-[15px] mb-2">Last Name</label>
               <input
                 type="text"
@@ -263,6 +340,15 @@ const UsersListTable = () => {
                 <option value="admin">Admin</option>
                 <option value="cashier">Cashier</option>
               </select>
+              <label className="text-[15px] mb-2">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={newUser.password}
+                onChange={handleInputChange}
+                className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
+                required
+              />
               <button type="submit" className="bg-primary text-white font-medium py-3 rounded-sm hover:bg-mustard hover:text-black">
                 ADD NEW USER
               </button>
@@ -300,7 +386,7 @@ const UsersListTable = () => {
                 className="w-[300px] text-[17px] border border-gray-500 px-5 py-1 rounded-sm mb-7"
                 required
               />
-              <label className="text-[15px] mb-2">Middle Initial</label>
+              <label className="text-[15px] mb-2">Middle Name</label>
               <input
                 type="text"
                 name="mname"
@@ -378,7 +464,7 @@ const UsersListTable = () => {
             ) : (
               <tr>
                 <td colSpan={columns.length} className="px-4 py-6 text-center text-gray-500">
-                  No records found
+                  {loading ? <ComponentLoading /> : 'No users found'}
                 </td>
               </tr>
             )}
