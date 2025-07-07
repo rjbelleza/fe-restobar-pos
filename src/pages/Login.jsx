@@ -59,7 +59,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen w-screen bg-[url('./images/bg.jpeg')] bg-center bg-cover">
+    <div className="flex justify-center items-center h-screen w-screen login-page">
       <div className="flex flex-col h-[400px] w-[400px] bg-[#FFFEC4] rounded-lg p-[40px]">
         <h1 className="text-center font-bold text-[25px] text-pink-700">Nuna's Restobar</h1>
         <form className="mt-5 mb-5" onSubmit={handleSubmit}>

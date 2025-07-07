@@ -6,3 +6,9 @@
   --color-secondary: #FFFEC4;
   --color-mustard: #FFDE59; 
 }
+
+.login-page {
+  background-image: url('/images/bg.jpeg');
+  background-position: center;
+  background-size: cover;
+}
